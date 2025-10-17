@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -14,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
+import com.ptit.btl_mobile.ui.screens.player.MainPlayer
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
@@ -34,12 +35,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BTL_MobileTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainPlayer()
             }
         }
     }
@@ -51,7 +47,6 @@ class MainActivity : ComponentActivity() {
             null ,
             1L,
             c.time,
-            null,
             null,
             null)
         val db = Database.getInstance()
