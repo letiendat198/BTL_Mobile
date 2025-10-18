@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">BTL_Mobile</string>
     <string name="title_activity_player">PlayerActivity</string>
+    <string name="title_activity_playlist_screen">PlaylistScreen</string>
 </resources>

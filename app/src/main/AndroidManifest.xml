@@ -12,6 +12,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BTL_Mobile">
         <activity
+            android:name=".ui.screens.playlist.PlaylistScreen"
+            android:exported="false"
+            android:label="@string/title_activity_playlist_screen"
+            android:theme="@style/Theme.BTL_Mobile" />
+        <activity
             android:name=".ui.Player"
             android:exported="false"
             android:label="@string/title_activity_player"
