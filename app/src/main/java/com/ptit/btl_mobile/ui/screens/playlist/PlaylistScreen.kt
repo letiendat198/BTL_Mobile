@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,14 +29,15 @@ import com.ptit.btl_mobile.model.database.Playlist
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.mutableListOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(
-    playlists: List<Playlist>,
     onBackClick: () -> Unit = {},
     onPlaylistClick: (Playlist) -> Unit = {}
 ) {
+    val playlists = remember { mutableListOf<Playlist>() } // TODO: PUT IN VIEWMODEL. PLACEHOLDER ONLY
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,6 +117,6 @@ fun PlaylistScreenPreview() {
     )
 
     BTL_MobileTheme {
-        PlaylistScreen(playlists = samplePlaylists)
+        PlaylistScreen()
     }
 }
