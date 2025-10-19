@@ -1,73 +1,110 @@
 package com.ptit.btl_mobile
 
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.ptit.btl_mobile.model.database.Database
-import com.ptit.btl_mobile.model.database.Song
-import com.ptit.btl_mobile.ui.screens.player.MainPlayer
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.util.Calendar
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-
+        // Init database
         Database(this.applicationContext)
-        CoroutineScope(Dispatchers.IO).launch {
-            testDatabase()
-        }
 
         setContent {
             BTL_MobileTheme {
-                MainPlayer()
+                AppNavLayout()
             }
         }
     }
-
-    suspend fun testDatabase() {
-        val c = Calendar.getInstance()
-        val s = Song(0,
-            "Hello",
-            null ,
-            1L,
-            c.time,
-            null,
-            null)
-        val db = Database.getInstance()
-        db.SongDAO().insertAll(s)
-        val songs = db.SongDAO().getAll();
-        Log.d("MAIN", "Database initialized, data length " + songs.size)
-    }
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun AppNavLayout() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+                NavigationBarItem(
+                    selected = currentDestination?.hierarchy?.any {
+                        it.hasRoute(Destinations.HomeScreen::class)
+                    } == true,
+                    onClick = {
+                        navController.navigate(Destinations.HomeScreen)
+                    },
+                    label = { Text("Home") },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.home),
+                            contentDescription = "Home"
+                        )
+                    }
+                )
+                NavigationBarItem(
+                    selected = currentDestination?.hierarchy?.any {
+                        it.hasRoute(Destinations.PlaylistScreen::class)
+                    } == true,
+                    onClick = {
+                        navController.navigate(Destinations.PlaylistScreen)
+                    },
+                    label = { Text("Playlist") },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.playlist_play),
+                            contentDescription = "Playlist"
+                        )
+                    }
+                )
+                NavigationBarItem(
+                    selected = currentDestination?.hierarchy?.any {
+                        it.hasRoute(Destinations.PlayerScreen::class)
+                    } == true,
+                    onClick = {
+                        navController.navigate(Destinations.PlayerScreen)
+                    },
+                    label = { Text("Library") },
+                    icon = {
+                        Icon(
+                            painter = painterResource(R.drawable.library_music),
+                            contentDescription = "Song"
+                        )
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
+        // Like Outlet in React Router
+        // Every composable within this NavHost will show up in this scaffold body
+        AppNavHost(navController, Modifier.padding(innerPadding))
+    }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
-fun GreetingPreview() {
-    BTL_MobileTheme {
-        Greeting("Android")
-    }
+fun PreviewHome() {
+    AppNavLayout()
 }
