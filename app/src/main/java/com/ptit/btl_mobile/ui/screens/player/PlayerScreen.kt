@@ -29,7 +29,7 @@ import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainPlayer() {
+fun PlayerScreen() {
     var seekPosition by remember { mutableFloatStateOf(0f) }
 
     Scaffold { innerPadding ->
@@ -122,6 +122,6 @@ fun MainPlayer() {
 @Composable
 fun GreetingPreview() {
     BTL_MobileTheme {
-        MainPlayer()
+        PlayerScreen()
     }
 }
