@@ -11,6 +11,14 @@ import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistScreen
 import kotlinx.serialization.Serializable
 
+// HOW TO ADD A NEW DESTINATION:
+// 1. Add an object or data class in Destinations
+// 2. Add a composable() with type of added destinations and a lambda calling the composable
+// See: https://developer.android.com/guide/navigation/design
+//
+// Note: DO NOT pass NavHostController to a child composable, pass a callback to navigate instead
+// See: https://developer.android.com/guide/navigation/use-graph/navigate
+
 sealed class Destinations {
     @Serializable object HomeScreen
     @Serializable object PlaylistScreen
