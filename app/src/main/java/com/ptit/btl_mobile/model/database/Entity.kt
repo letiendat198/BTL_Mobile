@@ -11,10 +11,10 @@ import java.util.Date
 data class Song (
     @PrimaryKey(autoGenerate = true) val songId: Long = 0,
     val name: String,
-    val songString: String?,
+    val songPath: String?,
     val duration: Long,
     val dateAdded: Date,
-    val imageString: String?,
+    val imagePath: String?,
     val songAlbumId: Long?,
 )
 
@@ -23,7 +23,7 @@ data class Artist (
     @PrimaryKey (autoGenerate = true) val artistId: Long = 0,
     val name: String,
     val description: String,
-    val imageString: String?
+    val imagePath: String?
 )
 
 @Entity
@@ -31,7 +31,7 @@ data class Album(
     @PrimaryKey(autoGenerate = true) val albumId: Long = 0,
     val name: String,
     val genre: String,
-    val imageString: String?,
+    val imagePath: String?,
     val year: Int,
 )
 
@@ -39,7 +39,7 @@ data class Album(
 data class Playlist (
     @PrimaryKey(autoGenerate = true) val playlistId: Long = 0,
     val name: String,
-    val imageString: String?,
+    val imagePath: String?,
     val dateCreated: Date
 )
 

@@ -5,6 +5,9 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.ptit.btl_mobile.model.database.DAO.AlbumDAO
+import com.ptit.btl_mobile.model.database.DAO.ArtistDAO
+import com.ptit.btl_mobile.model.database.DAO.PlaylistDAO
 import com.ptit.btl_mobile.model.database.DAO.SongDAO
 import com.ptit.btl_mobile.util.DateConverter
 
@@ -19,6 +22,9 @@ import com.ptit.btl_mobile.util.DateConverter
 @TypeConverters(DateConverter::class)
 abstract class PlayerDatabase: RoomDatabase() {
     abstract fun SongDAO(): SongDAO
+    abstract fun ArtistDAO(): ArtistDAO
+    abstract fun AlbumDAO(): AlbumDAO
+    abstract fun PlaylistDAO(): PlaylistDAO
 }
 
 class Database(context: Context) {

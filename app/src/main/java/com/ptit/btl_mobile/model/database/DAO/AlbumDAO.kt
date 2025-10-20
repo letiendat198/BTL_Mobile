@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.model.database.DAO
 
+import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -10,6 +11,7 @@ import com.ptit.btl_mobile.model.database.AlbumArtistCrossRef
 import com.ptit.btl_mobile.model.database.AlbumWithArtists
 import com.ptit.btl_mobile.model.database.AlbumWithSongs
 
+@Dao
 interface AlbumDAO {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertAll(vararg albums: Album): List<Long>

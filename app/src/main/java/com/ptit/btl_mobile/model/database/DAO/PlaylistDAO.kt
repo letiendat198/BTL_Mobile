@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.model.database.DAO
 
+import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -9,6 +10,7 @@ import com.ptit.btl_mobile.model.database.Playlist
 import com.ptit.btl_mobile.model.database.PlaylistSongCrossRef
 import com.ptit.btl_mobile.model.database.PlaylistWithSongs
 
+@Dao
 interface PlaylistDAO {
     @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
     suspend fun insertAll(vararg playlists: Playlist): List<Long>
