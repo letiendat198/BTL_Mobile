@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.ptit.btl_mobile.ui.screens.home.HomeScreen
 import com.ptit.btl_mobile.ui.screens.library.LibraryScreen
 import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
