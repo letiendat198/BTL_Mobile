@@ -31,17 +31,13 @@ import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaylistScreen(
-    playlists: List<Playlist>,
-    onBackClick: () -> Unit = {},
-    onPlaylistClick: (Playlist) -> Unit = {}
-) {
+fun PlaylistScreen(playlists: List<Playlist>) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Playlists", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = { /* Handle back navigation */ }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
@@ -57,7 +53,7 @@ fun PlaylistScreen(
             contentPadding = PaddingValues(12.dp)
         ) {
             items(playlists) { playlist ->
-                PlaylistCard(playlist = playlist, onClick = { onPlaylistClick(playlist) })
+                PlaylistCard(playlist = playlist, onClick = { /* Handle playlist click */ })
             }
         }
     }
@@ -95,19 +91,19 @@ fun PlaylistCard(playlist: Playlist, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis
         )
 
-        playlist.dateCreated?.let {
-            Text(
-                text = dateFormat.format(it),
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
+        Text(
+            text = dateFormat.format(playlist.dateCreated),
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
     }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun PlaylistScreenPreview() {
+
+    // Fake data
     val samplePlaylists = listOf(
         Playlist(1, "Relax Vibes", null, Date()),
         Playlist(2, "Workout Mix", null, Date()),
