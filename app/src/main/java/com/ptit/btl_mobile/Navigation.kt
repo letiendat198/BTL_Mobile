@@ -29,7 +29,7 @@ sealed class Destinations {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier) {
+fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
         modifier = modifier,

@@ -1,6 +1,8 @@
 package com.ptit.btl_mobile.ui.components
 
 import android.util.Log
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,12 +42,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.ptit.btl_mobile.MainActivity
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongWithArtists
+import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import com.ptit.btl_mobile.util.DateConverter
 import java.util.Date
@@ -60,6 +65,11 @@ fun SongList(
 ) {
     val checkStates = remember { SnapshotStateList(songs.size) {false} }
     var selectedSongs = remember {mapOf<SongWithArtists, Boolean>()}
+
+    // TODO: CAREFULL!! HERE WE ASSUME THIS COMPOSABLE IS BOUND TO AN ACTIVITY
+    // IT SHOULD BE!
+    val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(5.dp),
         modifier = Modifier.fillMaxHeight()
@@ -79,6 +89,9 @@ fun SongList(
                     )
                 }
                 SongEntry(song, Modifier.clickable(!isSelecting) {
+                    viewModel.currentSong.value = song
+                    viewModel.updateCurrentQueue(songs)
+                    // TODO: REMOVE ON CLICK?
                     onClick(song)
                 })
             }
@@ -92,31 +105,18 @@ fun SongEntry(song: SongWithArtists, modifier: Modifier) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = modifier.fillMaxWidth()
     ) {
-        if (song.song.imageUri != null){
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(song.song.imageUri)
-                    .build(),
-                placeholder = painterResource(R.drawable.ic_music_sample),
-                contentDescription = "Song image",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.size(50.dp)
-            )
-        }
-        else{
-            Image(
-                painter = painterResource(R.drawable.ic_music_sample),
-                contentDescription = "Song image",
-                modifier = Modifier.size(50.dp)
-            )
-        }
+        SongImage(
+            imageUri = song.song.imageUri,
+            modifier = Modifier.size(50.dp)
+        )
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .fillMaxHeight()
         ) {
             Text(song.song.name, fontWeight = FontWeight.SemiBold)
-            Text(song.artists.joinToString(",") { it.name }, fontWeight = FontWeight.Light)
+            Text(
+                if (song.artists.isNotEmpty())
+                    song.artists.joinToString(",") { it.name } else "Unknown artists",
+                fontWeight = FontWeight.Light)
         }
     }
 }

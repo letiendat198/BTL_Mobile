@@ -7,6 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -15,12 +18,14 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -31,6 +36,7 @@ import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongArtistCrossRef
 import com.ptit.btl_mobile.model.media_utils.MediaLoader
+import com.ptit.btl_mobile.ui.components.PlaybackControl
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import com.ptit.btl_mobile.util.DateConverter
 import kotlinx.coroutines.GlobalScope
@@ -61,7 +67,11 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BTL_MobileTheme {
-                AppNavLayout()
+                CompositionLocalProvider(
+                    LocalViewModelStoreOwner provides this
+                ) {
+                    AppNavLayout()
+                }
             }
         }
     }
@@ -149,12 +159,18 @@ fun AppNavLayout() {
     ) { innerPadding ->
         // Like Outlet in React Router
         // Every composable within this NavHost will show up in this scaffold body
-        AppNavHost(
-            navController,
-            Modifier
+        Column(
+            modifier = Modifier
                 .padding(innerPadding)
                 .padding(10.dp)
-        )
+        ) {
+            AppNavHost(
+                navController,
+                modifier = Modifier.weight(1f)
+            )
+            PlaybackControl()
+        }
+
     }
 }
 
