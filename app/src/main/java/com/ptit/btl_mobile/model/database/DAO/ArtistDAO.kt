@@ -20,4 +20,13 @@ interface ArtistDAO {
 
     @Query("SELECT * FROM Artist")
     suspend fun getAll(): List<Artist>
+
+    @Query("SELECT * FROM Artist WHERE name = :name")
+    suspend fun searchArtistByName(name: String): List<Artist>
+
+    suspend fun safeInsertArtist(artist: Artist): Long {
+        val artists = searchArtistByName(artist.name)
+        if (artists.isNotEmpty()) return artists[0].artistId // Normally artist name won't duplicate
+        else return insertArtist(artist)
+    }
 }

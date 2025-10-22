@@ -1,10 +1,12 @@
 package com.ptit.btl_mobile
 
+import android.Manifest
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,7 +30,9 @@ import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongArtistCrossRef
+import com.ptit.btl_mobile.model.media_utils.MediaLoader
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
+import com.ptit.btl_mobile.util.DateConverter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -39,7 +44,20 @@ class MainActivity : ComponentActivity() {
 
         // Init database
         Database(this.applicationContext)
-        insertTestData()
+
+        // Request permission
+        val requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+                if (isGranted) {
+                    Log.d("PERMISSION", "Permission granted")
+                    MediaLoader(this, this.lifecycleScope).loadMediaIntoDB()
+                }
+                else {
+                    Log.d("PERMISSION", "Permission denied")
+                }
+        }
+
+        requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
 
         setContent {
             BTL_MobileTheme {
@@ -53,16 +71,16 @@ fun insertTestData() {
     val db = Database.getInstance()
     val song = Song(
         name = "Song 1",
-        songPath = "",
+        songUri = "",
         duration = 10,
-        dateAdded = Date(),
-        imagePath = "",
+        dateAdded = DateConverter.fromDate(Date()),
+        imageUri = "",
         songAlbumId = null
     )
     val artist = Artist(
         name = "Artist 1",
         description = "Who tf is this",
-        imagePath = null
+        imageUri = null
     )
     GlobalScope.launch {
         val songId = db.SongDAO().insertSong(song)

@@ -20,6 +20,8 @@ class LibraryViewModel: ViewModel() {
 
     fun getAllSongs() {
         val db = Database.getInstance()
+        // This may block Main thread if any function called inside is not suspend function
+        // Wrap blocking function in withContext and dispatch to IO
         viewModelScope.launch {
             _songs = db.SongDAO().getAllWithArtists()
             songs.value = _songs // Actually update the state with the new list. This will cause a recompose
