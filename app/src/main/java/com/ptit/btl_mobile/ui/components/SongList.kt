@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,15 +34,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongWithArtists
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
+import com.ptit.btl_mobile.util.DateConverter
 import java.util.Date
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +61,7 @@ fun SongList(
     val checkStates = remember { SnapshotStateList(songs.size) {false} }
     var selectedSongs = remember {mapOf<SongWithArtists, Boolean>()}
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
         modifier = Modifier.fillMaxHeight()
     ) {
         itemsIndexed(songs) { index, song ->
@@ -86,11 +92,24 @@ fun SongEntry(song: SongWithArtists, modifier: Modifier) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = modifier.fillMaxWidth()
     ) {
-        Image(
-            painter = painterResource(R.drawable.ic_music_sample),
-            contentDescription = "Song image",
-            modifier = Modifier.size(50.dp)
-        )
+        if (song.song.imageUri != null){
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(song.song.imageUri)
+                    .build(),
+                placeholder = painterResource(R.drawable.ic_music_sample),
+                contentDescription = "Song image",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(50.dp)
+            )
+        }
+        else{
+            Image(
+                painter = painterResource(R.drawable.ic_music_sample),
+                contentDescription = "Song image",
+                modifier = Modifier.size(50.dp)
+            )
+        }
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
@@ -110,17 +129,15 @@ fun GreetingPreview() {
         var song = Song(
             i.toLong(),
             name = "Song " + i,
-            songPath = "",
+            songUri = "",
             duration = 123,
-            dateAdded = Date(),
-            imagePath = "",
+            dateAdded = DateConverter.fromDate(Date()),
             songAlbumId = 1L,
         )
         var artist = Artist(
             artistId = i.toLong(),
             name = "Artist " + i,
             description = "Who tf is this",
-            imagePath = ""
         )
         songs.add(SongWithArtists(song, listOf(artist)))
     }
