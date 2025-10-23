@@ -1,4 +1,4 @@
-package com.ptit.btl_mobile.model.media_utils
+package com.ptit.btl_mobile.model.media
 
 import android.util.Log
 import com.kyant.taglib.TagLib

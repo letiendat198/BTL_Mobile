@@ -1,4 +1,4 @@
-package com.ptit.btl_mobile.model.media_utils
+package com.ptit.btl_mobile.model.media
 
 import android.content.ContentUris
 import android.content.Context
@@ -52,7 +52,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
 
     }
 
-    fun readFromStoreToSong(cursor: Cursor): Song {
+    private fun readFromStoreToSong(cursor: Cursor): Song {
         val indexId = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
         val indexName = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
         val indexDuration = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)

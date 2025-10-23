@@ -1,15 +1,15 @@
 package com.ptit.btl_mobile
 
 import android.Manifest
+import android.content.ComponentName
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -24,19 +24,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongArtistCrossRef
-import com.ptit.btl_mobile.model.media_utils.MediaLoader
-import com.ptit.btl_mobile.ui.components.PlaybackControl
+import com.ptit.btl_mobile.model.media.MediaLoader
+import com.ptit.btl_mobile.model.media.PlaybackService
+import com.ptit.btl_mobile.ui.components.FloatingPlayer
+import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import com.ptit.btl_mobile.util.DateConverter
 import kotlinx.coroutines.GlobalScope
@@ -52,6 +57,7 @@ class MainActivity : ComponentActivity() {
         Database(this.applicationContext)
 
         // Request permission
+        // TODO: ONLY REQUEST IF NOT GRANTED> CURRENTLY RUN EVERYTIME
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                 if (isGranted) {
@@ -67,13 +73,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BTL_MobileTheme {
-                CompositionLocalProvider(
-                    LocalViewModelStoreOwner provides this
-                ) {
                     AppNavLayout()
-                }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        val playerViewModel = viewModels<PlayerViewModel>()
+
+        val mediaSessionToken = SessionToken(this,
+            ComponentName(this, PlaybackService::class.java))
+        val controllerFeature = MediaController.Builder(this, mediaSessionToken).buildAsync()
+        controllerFeature.addListener({
+            playerViewModel.value.mediaController = controllerFeature.get()
+        }, ContextCompat.getMainExecutor(this))
     }
 }
 
@@ -168,7 +183,7 @@ fun AppNavLayout() {
                 navController,
                 modifier = Modifier.weight(1f)
             )
-            PlaybackControl()
+            FloatingPlayer()
         }
 
     }

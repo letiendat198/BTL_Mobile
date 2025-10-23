@@ -1,5 +1,7 @@
 package com.ptit.btl_mobile.ui.screens.player
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,12 +26,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.R
+import com.ptit.btl_mobile.ui.components.PlaybackControl
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerScreen() {
+    val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     var seekPosition by remember { mutableFloatStateOf(0f) }
 
     Scaffold { innerPadding ->
@@ -63,33 +68,7 @@ fun PlayerScreen() {
             Box(contentAlignment = Alignment.Center, modifier = Modifier
             .weight(1F)
             .fillMaxWidth()) {
-                Row(horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxSize()) {
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier.fillMaxHeight()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.skip_previous),
-                            contentDescription = "Previous",
-                            modifier = Modifier.fillMaxSize())
-                    }
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier.fillMaxHeight()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.pause),
-                            contentDescription = "Pause/Player",
-                            modifier = Modifier.fillMaxSize())
-                    }
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier.fillMaxHeight()
-                    ) {
-                        Icon(painter = painterResource(R.drawable.skip_next),
-                            contentDescription = "Next",
-                            modifier = Modifier.fillMaxSize())
-                    }
-                }
+                PlaybackControl(viewModel, modifier = Modifier.fillMaxWidth())
             }
             Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier
             .weight(0.5F)
