@@ -9,7 +9,7 @@ import com.ptit.btl_mobile.model.database.SongWithArtists
 import kotlinx.coroutines.launch
 
 class LibraryViewModel: ViewModel() {
-    var _songs = listOf<SongWithArtists>()
+    private var _songs = listOf<SongWithArtists>()
     var songs = mutableStateOf(_songs)
 
     // This will run everytime the composable is create or re-created (navigated in or out)

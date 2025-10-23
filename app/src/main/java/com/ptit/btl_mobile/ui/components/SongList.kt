@@ -89,8 +89,7 @@ fun SongList(
                     )
                 }
                 SongEntry(song, Modifier.clickable(!isSelecting) {
-                    viewModel.currentSong.value = song
-                    viewModel.updateCurrentQueue(songs)
+                    viewModel.playSong(index, songs)
                     // TODO: REMOVE ON CLICK?
                     onClick(song)
                 })

@@ -85,6 +85,20 @@ dependencies {
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
+    val media3_version = "1.8.0"
+
+    // For media playback using ExoPlayer
+    implementation("androidx.media3:media3-exoplayer:$media3_version")
+
+
+    // For building media playback UIs using Jetpack Compose
+    implementation("androidx.media3:media3-ui-compose:${media3_version}")
+
+    // For exposing and controlling media sessions
+    implementation("androidx.media3:media3-session:${media3_version}")
+    // For extracting data from media containers
+    implementation("androidx.media3:media3-extractor:${media3_version}")
+
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 }

@@ -1,62 +1,76 @@
 package com.ptit.btl_mobile.ui.components
 
-import androidx.compose.foundation.background
+import androidx.annotation.OptIn
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.compose.state.PlayPauseButtonState
+import androidx.media3.ui.compose.state.rememberPlayPauseButtonState
+import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 
+@OptIn(UnstableApi::class)
 @Composable
-fun PlaybackControl(modifier: Modifier = Modifier) {
-    // TODO: Explicitly make MainActivity own this. May cause problem later if moved
-    val viewModel = viewModel<PlayerViewModel>()
+fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
+    // IconButton max size is 48.dp
+    val buttonSize = remember { 48.dp }
+    val playPauseButtonState: PlayPauseButtonState? = viewModel.mediaController?.let { rememberPlayPauseButtonState(it) }
 
-    if (viewModel.currentSong.value != null) {
-        val song = viewModel.currentSong.value
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = modifier
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(5.dp))
-                .background(MaterialTheme.colorScheme.secondaryContainer)
-                .padding(5.dp)
+    Row(horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = modifier) {
+        IconButton(
+            onClick = {
+                viewModel.mediaController?.seekToPrevious()
+            },
+//            modifier = Modifier
         ) {
-            SongImage(
-                imageUri = song?.song?.imageUri,
-                modifier = Modifier.size(50.dp)
-            )
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(song?.song?.name ?: "This should not happen", fontWeight = FontWeight.SemiBold)
-                Text(
-                    if (song?.artists?.isNotEmpty() ?: false)
-                        song.artists.joinToString(",") { it.name } else "Unknown artists",
-                    fontWeight = FontWeight.Light)
-            }
+            Icon(painter = painterResource(R.drawable.skip_previous),
+                contentDescription = "Previous",
+                modifier = Modifier.size(buttonSize))
+        }
+        IconButton(
+            onClick = {
+                if (playPauseButtonState == null || !playPauseButtonState.showPlay) {
+                    viewModel.mediaController?.pause()
+                } else viewModel.mediaController?.play()
+            },
+        ) {
+            Icon(painter = if (playPauseButtonState == null || !playPauseButtonState.showPlay) {
+                painterResource(R.drawable.pause)
+            } else painterResource(R.drawable.play_arrow),
+                contentDescription = "Pause/Play",
+                modifier = Modifier.size(buttonSize))
+        }
+        IconButton(
+            onClick = {
+                // TODO: seekToNext maybe?
+                viewModel.mediaController?.seekToNextMediaItem()
+            },
+//            modifier = Modifier
+        ) {
+            Icon(painter = painterResource(R.drawable.skip_next),
+                contentDescription = "Next",
+                modifier = Modifier.size(buttonSize))
         }
     }
-
-
 }
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun PlaybackControlPreview() {
-    PlaybackControl()
+fun PreviewControl() {
+//    PlaybackControl()
 }
