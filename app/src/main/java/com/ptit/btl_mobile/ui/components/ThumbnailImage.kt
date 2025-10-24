@@ -1,7 +1,6 @@
 package com.ptit.btl_mobile.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,7 +14,7 @@ import coil3.request.ImageRequest
 import com.ptit.btl_mobile.R
 
 @Composable
-fun SongImage(imageUri: String?, modifier: Modifier = Modifier) {
+fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier) {
     if (imageUri != null){
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)

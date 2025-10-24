@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.compose.state.PlayPauseButtonState
@@ -25,9 +26,9 @@ import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 
 @OptIn(UnstableApi::class)
 @Composable
-fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
+fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier, controlSize: Dp = 48.dp) {
     // IconButton max size is 48.dp
-    val buttonSize = remember { 48.dp }
+    val buttonSize = remember { controlSize }
     val playPauseButtonState: PlayPauseButtonState? = viewModel.mediaController?.let { rememberPlayPauseButtonState(it) }
 
     Row(horizontalArrangement = Arrangement.SpaceBetween,
@@ -36,7 +37,7 @@ fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
             onClick = {
                 viewModel.mediaController?.seekToPrevious()
             },
-//            modifier = Modifier
+            modifier = Modifier.size(buttonSize)
         ) {
             Icon(painter = painterResource(R.drawable.skip_previous),
                 contentDescription = "Previous",
@@ -48,6 +49,7 @@ fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
                     viewModel.mediaController?.pause()
                 } else viewModel.mediaController?.play()
             },
+            modifier = Modifier.size(buttonSize)
         ) {
             Icon(painter = if (playPauseButtonState == null || !playPauseButtonState.showPlay) {
                 painterResource(R.drawable.pause)
@@ -60,7 +62,7 @@ fun PlaybackControl(viewModel: PlayerViewModel, modifier: Modifier = Modifier) {
                 // TODO: seekToNext maybe?
                 viewModel.mediaController?.seekToNextMediaItem()
             },
-//            modifier = Modifier
+            modifier = Modifier.size(buttonSize)
         ) {
             Icon(painter = painterResource(R.drawable.skip_next),
                 contentDescription = "Next",

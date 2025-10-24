@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -121,54 +122,63 @@ fun AppNavLayout() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    val shouldHideBottomNav = currentDestination?.hierarchy?.any {
+            it.hasRoute(Destinations.PlayerScreen::class)
+        } == true
+    val shouldHideFloatingPlayer = currentDestination?.hierarchy?.any {
+        it.hasRoute(Destinations.PlayerScreen::class)
+    } == true
+
     Scaffold(
         bottomBar = {
-            NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-                NavigationBarItem(
-                    selected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(Destinations.HomeScreen::class)
-                    } == true,
-                    onClick = {
-                        navController.navigate(Destinations.HomeScreen)
-                    },
-                    label = { Text("Home") },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.home),
-                            contentDescription = "Home"
-                        )
-                    }
-                )
-                NavigationBarItem(
-                    selected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(Destinations.PlaylistScreen::class)
-                    } == true,
-                    onClick = {
-                        navController.navigate(Destinations.PlaylistScreen)
-                    },
-                    label = { Text("Playlist") },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.playlist_play),
-                            contentDescription = "Playlist"
-                        )
-                    }
-                )
-                NavigationBarItem(
-                    selected = currentDestination?.hierarchy?.any {
-                        it.hasRoute(Destinations.LibraryScreen::class)
-                    } == true,
-                    onClick = {
-                        navController.navigate(Destinations.LibraryScreen)
-                    },
-                    label = { Text("Library") },
-                    icon = {
-                        Icon(
-                            painter = painterResource(R.drawable.library_music),
-                            contentDescription = "Song"
-                        )
-                    }
-                )
+            if (!shouldHideBottomNav) {
+                NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any {
+                            it.hasRoute(Destinations.HomeScreen::class)
+                        } == true,
+                        onClick = {
+                            navController.navigate(Destinations.HomeScreen)
+                        },
+                        label = { Text("Home") },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.home),
+                                contentDescription = "Home"
+                            )
+                        }
+                    )
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any {
+                            it.hasRoute(Destinations.PlaylistScreen::class)
+                        } == true,
+                        onClick = {
+                            navController.navigate(Destinations.PlaylistScreen)
+                        },
+                        label = { Text("Playlist") },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.playlist_play),
+                                contentDescription = "Playlist"
+                            )
+                        }
+                    )
+                    NavigationBarItem(
+                        selected = currentDestination?.hierarchy?.any {
+                            it.hasRoute(Destinations.LibraryScreen::class)
+                        } == true,
+                        onClick = {
+                            navController.navigate(Destinations.LibraryScreen)
+                        },
+                        label = { Text("Library") },
+                        icon = {
+                            Icon(
+                                painter = painterResource(R.drawable.library_music),
+                                contentDescription = "Song"
+                            )
+                        }
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -183,7 +193,8 @@ fun AppNavLayout() {
                 navController,
                 modifier = Modifier.weight(1f)
             )
-            FloatingPlayer()
+            if (!shouldHideFloatingPlayer)
+                FloatingPlayer(onNavigateToPlayer = { navController.navigate(Destinations.PlayerScreen) })
         }
 
     }

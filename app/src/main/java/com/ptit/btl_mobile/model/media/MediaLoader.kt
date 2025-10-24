@@ -61,7 +61,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
 
         val id = cursor.getLong(indexId)
         val name = cursor.getString(indexName)
-        val duration = cursor.getInt(indexDuration)
+        val duration = cursor.getLong(indexDuration)
         val dateAdded = cursor.getLong(indexDateAdded)
 
         Log.d("MEDIA_LOADER", id.toString())

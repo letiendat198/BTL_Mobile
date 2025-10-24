@@ -13,7 +13,7 @@ data class Song (
     @PrimaryKey(autoGenerate = true) val songId: Long = 0,
     val name: String,
     val songUri: String,
-    val duration: Int,
+    val duration: Long,
     val dateAdded: Long,
     val imageUri: String? = null,
     val songAlbumId: Long? = null,
