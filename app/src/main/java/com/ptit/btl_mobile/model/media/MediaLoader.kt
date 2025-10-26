@@ -69,7 +69,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
 
         val contentUri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
 
-        val imageUri = copyThumbnailToInternal(contentUri, id)
+        val imageUri = copyThumbnailToInternal(contentUri, "song$id")
 
         val song = Song(
             songId = id,
@@ -82,14 +82,14 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
         return song
     }
 
-    fun copyThumbnailToInternal(contentUri: Uri, id: Long): Uri? {
+    fun copyThumbnailToInternal(contentUri: Uri, filename: String): Uri? {
         try {
             val thumbnail: Bitmap = context.contentResolver.loadThumbnail(
                 contentUri,
                 Size(800, 800),
                 null
             )
-            val thumbnailPath = "images/$id.png"
+            val thumbnailPath = "images/$filename.png"
             val imageUri = writeBitmapToInternal(thumbnail, thumbnailPath)
             return imageUri
         }

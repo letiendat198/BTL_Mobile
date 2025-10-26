@@ -2,6 +2,8 @@ package com.ptit.btl_mobile.ui.components
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun FloatingPlayer(modifier: Modifier = Modifier, onNavigateToPlayer: () -> Unit = {}) {
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
@@ -50,36 +53,38 @@ fun FloatingPlayer(modifier: Modifier = Modifier, onNavigateToPlayer: () -> Unit
                 .background(MaterialTheme.colorScheme.secondaryContainer)
                 .padding(5.dp)
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = modifier.weight(1f)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) {
-                        onNavigateToPlayer()
-                    }
-            ) {
-                ThumbnailImage(
-                    imageUri = it.song.imageUri,
-                    modifier = Modifier.size(50.dp)
-                )
-                Column(
-                    verticalArrangement = Arrangement.SpaceBetween,
+            SharedTransitionLayout {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = modifier.weight(1f)
+                        .clickable(
+                            interactionSource = interactionSource,
+                            indication = null
+                        ) {
+                            onNavigateToPlayer()
+                        }
                 ) {
-                    Text(
-                        it.song.name,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.basicMarquee()
+                    ThumbnailImage(
+                        imageUri = it.song.imageUri,
+                        modifier = Modifier.size(50.dp)
                     )
-                    Text(
-                        if (it.artists.isNotEmpty())
-                            it.artists.joinToString(",") { it.name } else "Unknown artists",
-                        fontWeight = FontWeight.Light,
-                        modifier = Modifier.basicMarquee()
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            it.song.name,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.basicMarquee()
+                        )
+                        Text(
+                            if (it.artists.isNotEmpty())
+                                it.artists.joinToString(",") { it.name } else "Unknown artists",
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.basicMarquee()
+                        )
+                    }
                 }
+                PlaybackControl(viewModel, controlSize = 40.dp)
             }
-            PlaybackControl(viewModel, controlSize = 40.dp)
         }
     }
 
