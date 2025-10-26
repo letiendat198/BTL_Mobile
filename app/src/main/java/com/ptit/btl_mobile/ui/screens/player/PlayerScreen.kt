@@ -108,12 +108,10 @@ fun PlayerScreen() {
                         modifier = Modifier.fillMaxWidth()) {
                         IconButton(
                             onClick = {},
-                            // TODO: Figure out Lyric icon clipping
-//                            modifier = Modifier.wrapContentSize()
                         ) {
                             Icon(painter = painterResource(R.drawable.lyrics),
                                 contentDescription = "Lyrics",
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
                         IconButton(
@@ -121,7 +119,7 @@ fun PlayerScreen() {
                         ) {
                             Icon(painter = painterResource(R.drawable.queue_music),
                                 contentDescription = "Queue music",
-                                modifier = Modifier.size(48.dp)
+                                modifier = Modifier.size(30.dp)
                             )
                         }
                     }

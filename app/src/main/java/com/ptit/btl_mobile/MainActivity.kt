@@ -45,6 +45,7 @@ import com.ptit.btl_mobile.ui.components.FloatingPlayer
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import com.ptit.btl_mobile.util.DateConverter
+import com.ptit.btl_mobile.util.isRoute
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.Date
@@ -122,21 +123,15 @@ fun AppNavLayout() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val shouldHideBottomNav = currentDestination?.hierarchy?.any {
-            it.hasRoute(Destinations.PlayerScreen::class)
-        } == true
-    val shouldHideFloatingPlayer = currentDestination?.hierarchy?.any {
-        it.hasRoute(Destinations.PlayerScreen::class)
-    } == true
+    val shouldHideBottomNav = currentDestination?.isRoute(Destinations.PlayerScreen::class)?:false
+    val shouldHideFloatingPlayer = currentDestination?.isRoute(Destinations.PlayerScreen::class)?:false
 
     Scaffold(
         bottomBar = {
             if (!shouldHideBottomNav) {
                 NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any {
-                            it.hasRoute(Destinations.HomeScreen::class)
-                        } == true,
+                        selected = currentDestination?.isRoute(Destinations.HomeScreen::class) == true,
                         onClick = {
                             navController.navigate(Destinations.HomeScreen)
                         },
@@ -149,9 +144,7 @@ fun AppNavLayout() {
                         }
                     )
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any {
-                            it.hasRoute(Destinations.PlaylistScreen::class)
-                        } == true,
+                        selected = currentDestination?.isRoute(Destinations.PlaylistScreen::class) == true,
                         onClick = {
                             navController.navigate(Destinations.PlaylistScreen)
                         },
@@ -164,9 +157,7 @@ fun AppNavLayout() {
                         }
                     )
                     NavigationBarItem(
-                        selected = currentDestination?.hierarchy?.any {
-                            it.hasRoute(Destinations.LibraryScreen::class)
-                        } == true,
+                        selected = currentDestination?.isRoute(Destinations.LibraryScreen::class) == true,
                         onClick = {
                             navController.navigate(Destinations.LibraryScreen)
                         },

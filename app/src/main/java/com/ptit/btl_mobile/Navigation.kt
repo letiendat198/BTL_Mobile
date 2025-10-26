@@ -2,6 +2,12 @@ package com.ptit.btl_mobile
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -43,7 +49,21 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
     ) {
         composable<Destinations.HomeScreen> { HomeScreen() }
         composable<Destinations.PlaylistScreen> { PlaylistScreen() }
-        composable<Destinations.PlayerScreen> { PlayerScreen() }
+        composable<Destinations.PlayerScreen>(
+            enterTransition = {
+                slideInVertically (
+                    animationSpec = tween(durationMillis = 500),
+                    initialOffsetY = { it }
+                )
+            },
+            exitTransition = {
+                slideOutVertically (
+                    animationSpec = tween(durationMillis = 500),
+                    targetOffsetY = { it }
+                )
+
+            }
+        ) { PlayerScreen() }
         composable<Destinations.LibraryScreen> { LibraryScreen() }
     }
 }
