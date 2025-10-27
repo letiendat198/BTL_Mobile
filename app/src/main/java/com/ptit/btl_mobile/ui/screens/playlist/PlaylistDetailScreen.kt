@@ -2,7 +2,10 @@ package com.ptit.btl_mobile.ui.screens.playlist
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -13,11 +16,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.ptit.btl_mobile.R
-import com.ptit.btl_mobile.ui.components.SongList
+import com.ptit.btl_mobile.ui.components.SongEntry
+import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -25,6 +30,9 @@ import java.util.Locale
 @Composable
 fun PlaylistDetailScreen(onBack: () -> Unit) {
     val viewModel: PlaylistViewModel = viewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
+    val playerViewModel = viewModel<PlayerViewModel>(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
     val selectedPlaylist by viewModel.selectedPlaylist.collectAsState()
@@ -37,86 +45,98 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(selectedPlaylist?.name ?: "Chi tiết Playlist") },
+                title = { Text(selectedPlaylist?.name ?: "Playlist Details") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { paddingValues ->
         selectedPlaylist?.let { playlist ->
-            Column(
-                Modifier
+            LazyColumn(
+                modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                // Header section với ảnh và thông tin
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    AsyncImage(
-                        model = playlist.imageUri ?: R.drawable.ic_music_sample,
-                        contentDescription = "Ảnh bìa playlist",
-                        placeholder = painterResource(R.drawable.ic_music_sample),
-                        error = painterResource(R.drawable.ic_music_sample),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(playlist.name, style = MaterialTheme.typography.headlineMedium)
-                    Text(
-                        "Tạo ngày: ${dateFormatter.format(playlist.dateCreated)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                    Text(
-                        "${playlistSongs.size} bài hát",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Button(onClick = { showEditDialog = true }) {
-                            Text("Sửa")
-                        }
-                        OutlinedButton(onClick = { showDeleteDialog = true }) {
-                            Text("Xóa")
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(8.dp))
-                }
-
-                // Song list section
-                if (playlistSongs.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                // Header section with image and info
+                item {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        AsyncImage(
+                            model = playlist.imageUri ?: R.drawable.ic_music_sample,
+                            contentDescription = "Playlist cover",
+                            placeholder = painterResource(R.drawable.ic_music_sample),
+                            error = painterResource(R.drawable.ic_music_sample),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(280.dp)
+                                .clip(MaterialTheme.shapes.medium)
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(playlist.name, style = MaterialTheme.typography.headlineMedium)
                         Text(
-                            "Chưa có bài hát nào trong playlist",
-                            style = MaterialTheme.typography.bodyLarge,
+                            "Created: ${dateFormatter.format(playlist.dateCreated)}",
+                            style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
+                        Text(
+                            "${playlistSongs.size} songs",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Button(onClick = { showEditDialog = true }) {
+                                Text("Edit")
+                            }
+                            OutlinedButton(onClick = { showDeleteDialog = true }) {
+                                Text("Delete")
+                            }
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+                        HorizontalDivider()
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+
+                // Empty state or song items
+                if (playlistSongs.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 48.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "No songs in this playlist yet",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 } else {
-                    SongList(
-                        songs = playlistSongs,
-                        isSelecting = false
-                    )
+                    // Add song items directly to this LazyColumn
+                    itemsIndexed(playlistSongs) { index, song ->
+                        SongEntry(
+                            song = song,
+                            modifier = Modifier
+                                .clickable {
+                                    playerViewModel.playSong(index, playlistSongs)
+                                }
+                                .padding(horizontal = 16.dp)
+                        )
+                    }
                 }
             }
 
@@ -125,12 +145,12 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                 var editName by remember { mutableStateOf(playlist.name) }
                 AlertDialog(
                     onDismissRequest = { showEditDialog = false },
-                    title = { Text("Sửa Tên Playlist") },
+                    title = { Text("Edit Playlist Name") },
                     text = {
                         OutlinedTextField(
                             value = editName,
                             onValueChange = { editName = it },
-                            label = { Text("Tên playlist") },
+                            label = { Text("Playlist name") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -142,12 +162,12 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                             }
                             showEditDialog = false
                         }) {
-                            Text("Lưu")
+                            Text("Save")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showEditDialog = false }) {
-                            Text("Hủy")
+                            Text("Cancel")
                         }
                     }
                 )
@@ -157,8 +177,8 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
             if (showDeleteDialog) {
                 AlertDialog(
                     onDismissRequest = { showDeleteDialog = false },
-                    title = { Text("Xóa Playlist") },
-                    text = { Text("Bạn có chắc muốn xóa '${playlist.name}' không?") },
+                    title = { Text("Delete Playlist") },
+                    text = { Text("Are you sure you want to delete '${playlist.name}'?") },
                     confirmButton = {
                         Button(
                             onClick = {
@@ -170,12 +190,12 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                                 containerColor = MaterialTheme.colorScheme.error
                             )
                         ) {
-                            Text("Xác nhận")
+                            Text("Confirm")
                         }
                     },
                     dismissButton = {
                         TextButton(onClick = { showDeleteDialog = false }) {
-                            Text("Hủy")
+                            Text("Cancel")
                         }
                     }
                 )
@@ -191,7 +211,7 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 CircularProgressIndicator()
-                Text("Đang tải playlist...")
+                Text("Loading playlist...")
             }
         }
     }
