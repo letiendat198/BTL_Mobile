@@ -1,64 +1,160 @@
 package com.ptit.btl_mobile.ui.screens.playlist
 
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.model.database.Playlist
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showSystemUi = true, showBackground = true)
 @Composable
-fun PlaylistScreen(viewModel: PlaylistViewModel = viewModel()) {
-    val playlists = viewModel.playlists.value
+fun PlaylistScreen(
+    onNavToCreatePlaylist: () -> Unit,
+    onNavToPlaylistDetailsScreen: () -> Unit
+) {
+    val viewModel = viewModel<PlaylistViewModel>(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
+    val playlists by viewModel.playlists.collectAsState()
+
+    var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Playlists") },
-                navigationIcon = {
-                    IconButton(onClick = { /* Handle back navigation */ }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavToCreatePlaylist) {
+                Icon(Icons.Default.Add, contentDescription = "Create playlist")
+            }
         }
-    ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(150.dp),
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .background(Color.White),
-            contentPadding = PaddingValues(12.dp)
-        ) {
-            items(playlists) { playlist ->
-                PlaylistCard(
-                    playlist = playlist,
-                    onClick = { /* Handle click */ }
-                )
+    ) { padding ->
+        if (playlists.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No Playlist. Press '+' to create.")
+            }
+        } else {
+            LazyColumn(
+                contentPadding = padding,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                items(playlists) { playlist ->
+                    PlaylistCard(
+                        playlist = playlist,
+                        onClick = {
+                            viewModel.selectPlaylist(playlist)
+                            viewModel.loadSongsForPlaylist(playlist.playlistId)
+                            onNavToPlaylistDetailsScreen()
+                        },
+                        onEdit = {
+                            selectedPlaylist = playlist
+                            showEditDialog = true
+                        },
+                        onDelete = {
+                            selectedPlaylist = playlist
+                            showDeleteDialog = true
+                        }
+                    )
+                }
             }
         }
     }
+
+    selectedPlaylist?.let {
+        if (showEditDialog) {
+            var editName by remember { mutableStateOf(it.name) }
+            EditNameDialog(
+                title = "Edit Playlist Name",
+                currentName = editName,
+                onNameChange = { editName = it },
+                onConfirm = {
+                    if (editName.isNotBlank()) {
+                        viewModel.updatePlaylistName(it, editName)
+                    }
+                    showEditDialog = false
+                },
+                onDismiss = { showEditDialog = false }
+            )
+        }
+
+        if (showDeleteDialog) {
+            ConfirmDialog(
+                title = "Delete Playlist",
+                text = "Do you want to delete '${it.name}' ?",
+                onConfirm = {
+                    viewModel.deletePlaylist(it)
+                    showDeleteDialog = false
+                },
+                onDismiss = { showDeleteDialog = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditNameDialog(
+    title: String,
+    currentName: String,
+    onNameChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = currentName,
+                onValueChange = onNameChange,
+                label = { Text("Playlist Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(onClick = onConfirm) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun ConfirmDialog(
+    title: String,
+    text: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(text) },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text("Confirm")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }

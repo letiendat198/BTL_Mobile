@@ -10,7 +10,10 @@ import androidx.navigation.compose.composable
 import com.ptit.btl_mobile.ui.screens.home.HomeScreen
 import com.ptit.btl_mobile.ui.screens.library.LibraryScreen
 import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
+import com.ptit.btl_mobile.ui.screens.playlist.CreatePlaylistScreen
+import com.ptit.btl_mobile.ui.screens.playlist.PlaylistDetailScreen
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistScreen
+import com.ptit.btl_mobile.ui.screens.playlist.SelectSongsScreen
 import kotlinx.serialization.Serializable
 
 // HOW TO ADD A NEW DESTINATION:
@@ -23,7 +26,10 @@ import kotlinx.serialization.Serializable
 
 sealed class Destinations {
     @Serializable object HomeScreen
+    @Serializable object SelectSongsScreen
+    @Serializable object CreatePlaylistScreen
     @Serializable object PlaylistScreen
+    @Serializable object PlaylistDetailScreen
     @Serializable object PlayerScreen
     @Serializable object LibraryScreen
 }
@@ -34,15 +40,36 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         navController = navController,
         modifier = modifier,
         startDestination = Destinations.HomeScreen,
-        enterTransition = {
-            EnterTransition.None
-        },
-        exitTransition = {
-            ExitTransition.None
-        }
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None }
     ) {
         composable<Destinations.HomeScreen> { HomeScreen() }
-        composable<Destinations.PlaylistScreen> { PlaylistScreen() }
+        composable<Destinations.PlaylistScreen> {
+            PlaylistScreen(
+                onNavToCreatePlaylist = {
+                    navController.navigate(Destinations.CreatePlaylistScreen)
+                },
+                onNavToPlaylistDetailsScreen = {
+                    navController.navigate(Destinations.PlaylistDetailScreen)
+                }
+            )
+        }
+
+        composable<Destinations.PlaylistDetailScreen> {
+            PlaylistDetailScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable<Destinations.CreatePlaylistScreen> {
+            CreatePlaylistScreen(
+                onBack = { navController.popBackStack() },
+                onNavToSelectSongs = { navController.navigate(Destinations.SelectSongsScreen) },
+            )
+        }
+        composable<Destinations.SelectSongsScreen> { SelectSongsScreen(
+            onBack = {navController.navigate(
+                Destinations.PlaylistScreen
+            )}
+        ) }
         composable<Destinations.PlayerScreen> { PlayerScreen() }
         composable<Destinations.LibraryScreen> { LibraryScreen() }
     }
