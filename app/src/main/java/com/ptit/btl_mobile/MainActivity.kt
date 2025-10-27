@@ -9,7 +9,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
@@ -19,20 +23,18 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ptit.btl_mobile.model.database.Artist
@@ -42,6 +44,7 @@ import com.ptit.btl_mobile.model.database.SongArtistCrossRef
 import com.ptit.btl_mobile.model.media.MediaLoader
 import com.ptit.btl_mobile.model.media.PlaybackService
 import com.ptit.btl_mobile.ui.components.FloatingPlayer
+import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 import com.ptit.btl_mobile.util.DateConverter
@@ -117,77 +120,100 @@ fun insertTestData() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AppNavLayout() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    val shouldHideBottomNav = currentDestination?.isRoute(Destinations.PlayerScreen::class)?:false
-    val shouldHideFloatingPlayer = currentDestination?.isRoute(Destinations.PlayerScreen::class)?:false
+    var showPlayer by remember { mutableStateOf(false) }
 
-    Scaffold(
-        bottomBar = {
-            if (!shouldHideBottomNav) {
-                NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-                    NavigationBarItem(
-                        selected = currentDestination?.isRoute(Destinations.HomeScreen::class) == true,
-                        onClick = {
-                            navController.navigate(Destinations.HomeScreen)
-                        },
-                        label = { Text("Home") },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.home),
-                                contentDescription = "Home"
-                            )
-                        }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination?.isRoute(Destinations.PlaylistScreen::class) == true,
-                        onClick = {
-                            navController.navigate(Destinations.PlaylistScreen)
-                        },
-                        label = { Text("Playlist") },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.playlist_play),
-                                contentDescription = "Playlist"
-                            )
-                        }
-                    )
-                    NavigationBarItem(
-                        selected = currentDestination?.isRoute(Destinations.LibraryScreen::class) == true,
-                        onClick = {
-                            navController.navigate(Destinations.LibraryScreen)
-                        },
-                        label = { Text("Library") },
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.library_music),
-                                contentDescription = "Song"
-                            )
+    SharedTransitionLayout {
+        // Don't put AnimatedContent at root. Otherwise, when changing state, there won't be any
+        // composable shown and window background will show through, causing white flickering
+        Scaffold(
+            bottomBar = {
+                if (!showPlayer) {
+                    NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+                        NavigationBarItem(
+                            selected = currentDestination?.isRoute(Destinations.HomeScreen::class) == true,
+                            onClick = {
+                                navController.navigate(Destinations.HomeScreen)
+                            },
+                            label = { Text("Home") },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.home),
+                                    contentDescription = "Home"
+                                )
+                            }
+                        )
+                        NavigationBarItem(
+                            selected = currentDestination?.isRoute(Destinations.PlaylistScreen::class) == true,
+                            onClick = {
+                                navController.navigate(Destinations.PlaylistScreen)
+                            },
+                            label = { Text("Playlist") },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.playlist_play),
+                                    contentDescription = "Playlist"
+                                )
+                            }
+                        )
+                        NavigationBarItem(
+                            selected = currentDestination?.isRoute(Destinations.LibraryScreen::class) == true,
+                            onClick = {
+                                navController.navigate(Destinations.LibraryScreen)
+                            },
+                            label = { Text("Library") },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.library_music),
+                                    contentDescription = "Song"
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        ) { innerPadding ->
+            AnimatedContent(
+                showPlayer,
+            ) { shouldShowPlayer ->
+                if (!shouldShowPlayer) {
+                    Column(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .padding(10.dp)
+                    ) {
+                        // Like Outlet in React Router
+                        // Every composable within this NavHost will show up in this scaffold body
+                        AppNavHost(
+                            navController,
+                            modifier = Modifier.weight(1f)
+                        )
+                        FloatingPlayer(
+                            this@SharedTransitionLayout,
+                            this@AnimatedContent,
+                            onShowPlayer = {
+                                showPlayer = true
+                            }
+                        )
+                    }
+                }
+                else {
+                    PlayerScreen(
+                        this@SharedTransitionLayout,
+                        this@AnimatedContent,
+                        onBack = {
+                            showPlayer = false
                         }
                     )
                 }
             }
         }
-    ) { innerPadding ->
-        // Like Outlet in React Router
-        // Every composable within this NavHost will show up in this scaffold body
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(10.dp)
-        ) {
-            AppNavHost(
-                navController,
-                modifier = Modifier.weight(1f)
-            )
-            if (!shouldHideFloatingPlayer)
-                FloatingPlayer(onNavigateToPlayer = { navController.navigate(Destinations.PlayerScreen) })
-        }
-
     }
 }
 

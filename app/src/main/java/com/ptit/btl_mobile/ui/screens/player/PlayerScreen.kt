@@ -1,10 +1,18 @@
 package com.ptit.btl_mobile.ui.screens.player
 
 import android.text.format.DateUtils
+import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,84 +51,122 @@ import com.ptit.btl_mobile.ui.components.PlaybackControl
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
 import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun PlayerScreen() {
+fun PlayerScreen(
+    sharedTransitionScope: SharedTransitionScope,
+    animatedContentScope: AnimatedContentScope,
+    onBack: () -> Unit
+) {
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     var seekPosition by remember { viewModel.currentPosition }
     val currentSong by remember { viewModel.currentSong }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+
+    BackHandler {
+        onBack()
+    }
 
     currentSong?.let { song ->
-        Scaffold { innerPadding ->
-            Column(modifier = Modifier.padding(innerPadding).padding(25.dp, 5.dp)) {
-                Box(contentAlignment = Alignment.Center,
+        with(sharedTransitionScope) {
+            Scaffold { innerPadding ->
+                Column(
                     modifier = Modifier
-                        .weight(1F)
-                        .fillMaxWidth()) {
-                    ThumbnailImage( // TODO: WHY NOT ROUNDED
-                        song.song.imageUri,
-                        modifier = Modifier
-                            .fillMaxSize()
-                    )
-                }
-                Column(verticalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
+                        .padding(innerPadding)
+                        .padding(25.dp, 5.dp)
+                        .draggable(
+                            orientation = Orientation.Vertical,
+                            state = rememberDraggableState { delta -> dragOffset += delta },
+                            onDragStopped = {
+                                if (dragOffset > 0) { // Up is +
+                                    onBack()
+                                }
+                                dragOffset = 0f; // Reset
+                            }
+                        )
                 ) {
-                    Column {
-                        Row (
-                            modifier = Modifier.padding(0.dp, 10.dp)
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text(
-                                    song.song.name,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 25.sp,
-                                    modifier = Modifier.basicMarquee()
+                    Box(contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .weight(1F)
+                            .fillMaxWidth()) {
+                        ThumbnailImage( // TODO: WHY NOT ROUNDED
+                            song.song.imageUri,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .sharedElement(
+                                    rememberSharedContentState(key = "image"),
+                                    animatedVisibilityScope = animatedContentScope
                                 )
-                                Text(
-                                    song.artists.joinToString(", ") {it.name},
-                                    modifier = Modifier.basicMarquee()
-                                )
+                        )
+                    }
+                    Column(verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        Column {
+                            Row (
+                                modifier = Modifier.padding(0.dp, 10.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Text(
+                                        song.song.name,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 25.sp,
+                                        modifier = Modifier.basicMarquee()
+                                    )
+                                    Text(
+                                        song.artists.joinToString(", ") {it.name},
+                                        modifier = Modifier.basicMarquee()
+                                    )
+                                }
+                            }
+                            Slider(
+                                value = seekPosition.toFloat(),
+                                onValueChange = {seekPosition = it.toLong()},
+                                onValueChangeFinished = {
+                                    viewModel.mediaController?.seekTo(seekPosition * 1000) // Second to MS
+                                },
+                                valueRange = 0f..(song.song.duration / 1000).toFloat()
+                            )
+                            Row(horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                            ) {
+                                Text(DateUtils.formatElapsedTime(seekPosition))
+                                Text(DateUtils.formatElapsedTime(song.song.duration / 1000))
                             }
                         }
-                        Slider(
-                            value = seekPosition.toFloat(),
-                            onValueChange = {seekPosition = it.toLong()},
-                            onValueChangeFinished = {
-                                viewModel.mediaController?.seekTo(seekPosition * 1000) // Second to MS
-                            },
-                            valueRange = 0f..(song.song.duration / 1000).toFloat()
-                        )
-                        Row(horizontalArrangement = Arrangement.SpaceBetween,
+
+                        PlaybackControl(
+                            viewModel,
+                            controlSize = 60.dp,
                             modifier = Modifier
                                 .fillMaxWidth()
-                        ) {
-                            Text(DateUtils.formatElapsedTime(seekPosition))
-                            Text(DateUtils.formatElapsedTime(song.song.duration / 1000))
-                        }
-                    }
+                                .sharedElement(
+                                    rememberSharedContentState(key = "control"),
+                                    animatedVisibilityScope = animatedContentScope
+                                )
+                        )
 
-                    PlaybackControl(viewModel, controlSize = 60.dp, modifier = Modifier.fillMaxWidth())
-
-                    Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()) {
-                        IconButton(
-                            onClick = {},
-                        ) {
-                            Icon(painter = painterResource(R.drawable.lyrics),
-                                contentDescription = "Lyrics",
-                                modifier = Modifier.size(30.dp)
-                            )
-                        }
-                        IconButton(
-                            onClick = {}
-                        ) {
-                            Icon(painter = painterResource(R.drawable.queue_music),
-                                contentDescription = "Queue music",
-                                modifier = Modifier.size(30.dp)
-                            )
+                        Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()) {
+                            IconButton(
+                                onClick = {},
+                            ) {
+                                Icon(painter = painterResource(R.drawable.lyrics),
+                                    contentDescription = "Lyrics",
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = {}
+                            ) {
+                                Icon(painter = painterResource(R.drawable.queue_music),
+                                    contentDescription = "Queue music",
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -129,10 +175,10 @@ fun PlayerScreen() {
     } ?: Text("No current song to play. This should not happen")
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun GreetingPreview() {
-    BTL_MobileTheme {
-        PlayerScreen()
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun GreetingPreview() {
+//    BTL_MobileTheme {
+//        PlayerScreen()
+//    }
+//}

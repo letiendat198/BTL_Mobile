@@ -1,7 +1,10 @@
 package com.ptit.btl_mobile
 
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
@@ -13,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.ptit.btl_mobile.ui.screens.home.HomeScreen
 import com.ptit.btl_mobile.ui.screens.library.LibraryScreen
 import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
@@ -36,7 +40,6 @@ sealed class Destinations {
     @Serializable object CreatePlaylistScreen
     @Serializable object PlaylistScreen
     @Serializable object PlaylistDetailScreen
-    @Serializable object PlayerScreen
     @Serializable object LibraryScreen
 }
 
@@ -76,7 +79,6 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
                 Destinations.PlaylistScreen
             )}
         ) }
-        composable<Destinations.PlayerScreen> { PlayerScreen() }
         composable<Destinations.LibraryScreen> { LibraryScreen() }
     }
 }
