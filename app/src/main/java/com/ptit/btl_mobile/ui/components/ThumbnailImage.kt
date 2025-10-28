@@ -23,14 +23,14 @@ fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier) {
             placeholder = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
             contentScale = ContentScale.Fit,
-            modifier = modifier.clip(shape = RoundedCornerShape(5.dp))
+            modifier = Modifier.clip(shape = RoundedCornerShape(5.dp)).then(modifier)
         )
     }
     else{
         Image(
             painter = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
-            modifier = modifier.clip(shape = RoundedCornerShape(5.dp))
+            modifier = Modifier.clip(shape = RoundedCornerShape(5.dp)).then(modifier)
         )
     }
 }

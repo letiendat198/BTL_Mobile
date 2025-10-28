@@ -2,6 +2,8 @@ package com.ptit.btl_mobile
 
 import android.Manifest
 import android.content.ComponentName
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -9,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresExtension
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -32,9 +35,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ptit.btl_mobile.model.database.Artist
@@ -53,7 +60,11 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.util.Date
 
+// Init datastore
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore("settings")
+
 class MainActivity : ComponentActivity() {
+    @RequiresExtension(extension = Build.VERSION_CODES.R, version = 1)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -62,12 +73,11 @@ class MainActivity : ComponentActivity() {
         Database(this.applicationContext)
 
         // Request permission
-        // TODO: ONLY REQUEST IF NOT GRANTED> CURRENTLY RUN EVERYTIME
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                 if (isGranted) {
                     Log.d("PERMISSION", "Permission granted")
-                    MediaLoader(this, this.lifecycleScope).loadMediaIntoDB()
+                    MediaLoader(this, this.lifecycleScope).updateOrReloadMedia()
                 }
                 else {
                     Log.d("PERMISSION", "Permission denied")
@@ -97,36 +107,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-fun insertTestData() {
-    val db = Database.getInstance()
-    val song = Song(
-        name = "Song 1",
-        songUri = "",
-        duration = 10,
-        dateAdded = DateConverter.fromDate(Date()),
-        imageUri = "",
-        songAlbumId = null
-    )
-    val artist = Artist(
-        name = "Artist 1",
-        description = "Who tf is this",
-        imageUri = null
-    )
-    GlobalScope.launch {
-        val songId = db.SongDAO().insertSong(song)
-        val artistId = db.ArtistDAO().insertArtist(artist)
-        db.SongDAO().insertSongWithArtists(SongArtistCrossRef(artistId, songId))
-        Log.d("MAIN_ACTIVITY", "Insert test data completed")
-    }
-}
-
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AppNavLayout() {
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
     var showPlayer by remember { mutableStateOf(false) }
 
     SharedTransitionLayout {
@@ -135,47 +119,7 @@ fun AppNavLayout() {
         Scaffold(
             bottomBar = {
                 if (!showPlayer) {
-                    NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
-                        NavigationBarItem(
-                            selected = currentDestination?.isRoute(Destinations.HomeScreen::class) == true,
-                            onClick = {
-                                navController.navigate(Destinations.HomeScreen)
-                            },
-                            label = { Text("Home") },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.home),
-                                    contentDescription = "Home"
-                                )
-                            }
-                        )
-                        NavigationBarItem(
-                            selected = currentDestination?.isRoute(Destinations.PlaylistScreen::class) == true,
-                            onClick = {
-                                navController.navigate(Destinations.PlaylistScreen)
-                            },
-                            label = { Text("Playlist") },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.playlist_play),
-                                    contentDescription = "Playlist"
-                                )
-                            }
-                        )
-                        NavigationBarItem(
-                            selected = currentDestination?.isRoute(Destinations.LibraryScreen::class) == true,
-                            onClick = {
-                                navController.navigate(Destinations.LibraryScreen)
-                            },
-                            label = { Text("Library") },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.library_music),
-                                    contentDescription = "Song"
-                                )
-                            }
-                        )
-                    }
+                    BottomNavBar(navController)
                 }
             }
         ) { innerPadding ->
@@ -214,6 +158,54 @@ fun AppNavLayout() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun BottomNavBar(navController: NavHostController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    NavigationBar(windowInsets = NavigationBarDefaults.windowInsets) {
+        NavigationBarItem(
+            selected = currentDestination?.isRoute(Destinations.HomeScreen::class) == true,
+            onClick = {
+                navController.navigate(Destinations.HomeScreen)
+            },
+            label = { Text("Home") },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.home),
+                    contentDescription = "Home"
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = currentDestination?.isRoute(Destinations.PlaylistScreen::class) == true,
+            onClick = {
+                navController.navigate(Destinations.PlaylistScreen)
+            },
+            label = { Text("Playlist") },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.playlist_play),
+                    contentDescription = "Playlist"
+                )
+            }
+        )
+        NavigationBarItem(
+            selected = currentDestination?.isRoute(Destinations.LibraryScreen::class) == true,
+            onClick = {
+                navController.navigate(Destinations.LibraryScreen)
+            },
+            label = { Text("Library") },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.library_music),
+                    contentDescription = "Song"
+                )
+            }
+        )
     }
 }
 

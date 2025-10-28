@@ -15,8 +15,8 @@ fun LibraryScreen() {
     // TODO: CAREFULL!! HERE WE ASSUME THIS COMPOSABLE IS BOUND TO AN ACTIVITY
     // IT SHOULD BE!
     val viewModel: LibraryViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
-    Log.d("LIBRARY_SCREEN", "Recomposed when song list size is: " + viewModel.songs.value.size)
-    SongList(viewModel.songs.value , onClick = { song ->
+    Log.d("LIBRARY_SCREEN", "Recomposed when song list size is: " + viewModel.songs.size)
+    SongList(viewModel.songs , onClick = { song ->
     })
 }
 

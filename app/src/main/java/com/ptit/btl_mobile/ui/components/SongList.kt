@@ -11,14 +11,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,14 +43,24 @@ fun SongList(
 ) {
     val checkStates = remember { SnapshotStateList(songs.size) {false} }
     var selectedSongs = remember {mapOf<SongWithArtists, Boolean>()}
+    val listState = rememberLazyListState()
 
     // TODO: CAREFULL!! HERE WE ASSUME THIS COMPOSABLE IS BOUND TO AN ACTIVITY
     // IT SHOULD BE!
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
 
+    // TODO: REFINE THIS SO THAT IT DOESN'T WORK IN NORMAL LIBRARY VIEW
+    LaunchedEffect(Unit) {
+        if (songs === viewModel.currentQueue.value) {
+            val currentIndex = viewModel.currentSongIndex
+            if (currentIndex > -1) listState.scrollToItem(currentIndex)
+        }
+    }
+
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = Modifier.fillMaxHeight()
+        modifier = Modifier.fillMaxHeight(),
+        state = listState
     ) {
         itemsIndexed(songs) { index, song ->
             Row {
@@ -86,11 +99,19 @@ fun SongEntry(song: SongWithArtists, modifier: Modifier) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(song.song.name, fontWeight = FontWeight.SemiBold)
+            Text(
+                song.song.name,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 if (song.artists.isNotEmpty())
                     song.artists.joinToString(",") { it.name } else "Unknown artists",
-                fontWeight = FontWeight.Light)
+                fontWeight = FontWeight.Light,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }

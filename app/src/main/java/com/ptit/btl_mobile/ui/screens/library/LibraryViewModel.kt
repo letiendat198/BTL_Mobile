@@ -1,7 +1,9 @@
 package com.ptit.btl_mobile.ui.screens.library
 
 import android.util.Log
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ptit.btl_mobile.model.database.Database
@@ -10,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class LibraryViewModel: ViewModel() {
     private var _songs = listOf<SongWithArtists>()
-    var songs = mutableStateOf(_songs)
+    var songs by mutableStateOf(_songs)
 
     // This will run everytime the composable is create or re-created (navigated in or out)
     init {
@@ -24,7 +26,7 @@ class LibraryViewModel: ViewModel() {
         // Wrap blocking function in withContext and dispatch to IO
         viewModelScope.launch {
             _songs = db.SongDAO().getAllWithArtists()
-            songs.value = _songs // Actually update the state with the new list. This will cause a recompose
+            songs = _songs // Actually update the state with the new list. This will cause a recompose
         }
     }
 }

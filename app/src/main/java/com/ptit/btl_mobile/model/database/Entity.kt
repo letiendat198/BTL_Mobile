@@ -33,9 +33,9 @@ data class Artist (
 data class Album(
     @PrimaryKey(autoGenerate = true) val albumId: Long = 0,
     val name: String,
-    val genre: String,
+    val genre: String? = null,
     val imageUri: String? = null,
-    val year: Int,
+    val year: Int? = null,
 )
 
 @Entity
@@ -94,7 +94,7 @@ data class SongWithArtists(
 )
 
 data class AlbumWithArtists(
-    @Embedded val song: Album,
+    @Embedded val album: Album,
     @Relation(
         parentColumn = "albumId",
         entityColumn = "artistId",

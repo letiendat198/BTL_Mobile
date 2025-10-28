@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -34,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,8 +61,9 @@ fun PlayerScreen(
     onBack: () -> Unit
 ) {
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
-    var seekPosition by remember { viewModel.currentPosition }
-    val currentSong by remember { viewModel.currentSong }
+    // DO NOT REMEMBER STUFFS FROM VIEWMODEL
+    var seekPosition by viewModel.currentPosition
+    val currentSong by viewModel.currentSong
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
     BackHandler {
@@ -73,7 +76,7 @@ fun PlayerScreen(
                 Column(
                     modifier = Modifier
                         .padding(innerPadding)
-                        .padding(25.dp, 5.dp)
+                        .padding(25.dp, 10.dp)
                         .draggable(
                             orientation = Orientation.Vertical,
                             state = rememberDraggableState { delta -> dragOffset += delta },
@@ -85,42 +88,54 @@ fun PlayerScreen(
                             }
                         )
                 ) {
-                    Box(contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .weight(1F)
-                            .fillMaxWidth()) {
-                        ThumbnailImage( // TODO: WHY NOT ROUNDED
-                            song.song.imageUri,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .sharedElement(
-                                    rememberSharedContentState(key = "image"),
-                                    animatedVisibilityScope = animatedContentScope
-                                )
-                        )
+                    AnimatedContent(
+                        viewModel.showQueue,
+                        modifier = Modifier.weight(1f).fillMaxWidth()
+                    ) { shouldShowQueue ->
+                        if (!shouldShowQueue) {
+                            Column {
+                                Box(contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1F)
+                                        .fillMaxWidth()) {
+                                    ThumbnailImage( // TODO: WHY NOT ROUNDED
+                                        song.song.imageUri,
+                                        modifier = Modifier
+                                            .fillMaxWidth() // fillMaxSize won't show rounded corner
+                                            .sharedElement(
+                                                rememberSharedContentState(key = "image"),
+                                                animatedVisibilityScope = animatedContentScope
+                                            )
+                                    )
+                                }
+                                Row (
+                                    modifier = Modifier.padding(0.dp, 10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Text(
+                                            song.song.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 25.sp,
+                                            modifier = Modifier.basicMarquee()
+                                        )
+                                        Text(
+                                            song.artists.joinToString(", ") {it.name},
+                                            modifier = Modifier.basicMarquee()
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            PlayerQueue(viewModel)
+                        }
                     }
                     Column(verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(0.7f)
                             .fillMaxWidth()
                     ) {
                         Column {
-                            Row (
-                                modifier = Modifier.padding(0.dp, 10.dp)
-                            ) {
-                                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    Text(
-                                        song.song.name,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 25.sp,
-                                        modifier = Modifier.basicMarquee()
-                                    )
-                                    Text(
-                                        song.artists.joinToString(", ") {it.name},
-                                        modifier = Modifier.basicMarquee()
-                                    )
-                                }
-                            }
                             Slider(
                                 value = seekPosition.toFloat(),
                                 onValueChange = {seekPosition = it.toLong()},
@@ -149,25 +164,7 @@ fun PlayerScreen(
                                 )
                         )
 
-                        Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()) {
-                            IconButton(
-                                onClick = {},
-                            ) {
-                                Icon(painter = painterResource(R.drawable.lyrics),
-                                    contentDescription = "Lyrics",
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                            IconButton(
-                                onClick = {}
-                            ) {
-                                Icon(painter = painterResource(R.drawable.queue_music),
-                                    contentDescription = "Queue music",
-                                    modifier = Modifier.size(30.dp)
-                                )
-                            }
-                        }
+                        FunctionRow(viewModel)
                     }
                 }
             }
@@ -175,10 +172,27 @@ fun PlayerScreen(
     } ?: Text("No current song to play. This should not happen")
 }
 
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun GreetingPreview() {
-//    BTL_MobileTheme {
-//        PlayerScreen()
-//    }
-//}
+@Composable
+fun FunctionRow(viewModel: PlayerViewModel) {
+    Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()) {
+        IconButton(
+            onClick = {},
+        ) {
+            Icon(painter = painterResource(R.drawable.lyrics),
+                contentDescription = "Lyrics",
+                modifier = Modifier.size(30.dp)
+            )
+        }
+        IconButton(
+            onClick = {
+                viewModel.showQueue = !viewModel.showQueue
+            }
+        ) {
+            Icon(painter = painterResource(R.drawable.queue_music),
+                contentDescription = "Queue music",
+                modifier = Modifier.size(30.dp)
+            )
+        }
+    }
+}

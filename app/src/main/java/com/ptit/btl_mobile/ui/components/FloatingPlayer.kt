@@ -51,12 +51,12 @@ fun FloatingPlayer(
     modifier: Modifier = Modifier,
 ) {
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
-
+    val currentSong by viewModel.currentSong
     // Only used to disable ripple on click
     val interactionSource = remember { MutableInteractionSource() }
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
-    viewModel.currentSong.value?.let {
+    currentSong?.let {
         with(sharedTransitionScope) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
