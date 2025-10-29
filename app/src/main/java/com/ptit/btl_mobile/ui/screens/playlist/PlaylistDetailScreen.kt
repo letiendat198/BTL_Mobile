@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,7 +30,10 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlaylistDetailScreen(onBack: () -> Unit) {
+fun PlaylistDetailScreen(
+    onBack: () -> Unit,
+    onAddSongs: (Long) -> Unit // Callback to navigate to add songs screen
+) {
     val viewModel: PlaylistViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
@@ -52,6 +57,13 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            selectedPlaylist?.let {
+                FloatingActionButton(onClick = { onAddSongs(it.playlistId) }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add songs")
+                }
+            }
         }
     ) { paddingValues ->
         selectedPlaylist?.let { playlist ->
@@ -128,14 +140,26 @@ fun PlaylistDetailScreen(onBack: () -> Unit) {
                 } else {
                     // Add song items directly to this LazyColumn
                     itemsIndexed(playlistSongs) { index, song ->
-                        SongEntry(
-                            song = song,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clickable {
-                                    playerViewModel.playSong(index, playlistSongs)
-                                }
+                                .fillMaxWidth()
                                 .padding(horizontal = 16.dp)
-                        )
+                        ) {
+                            SongEntry(
+                                song = song,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        playerViewModel.playSong(index, playlistSongs)
+                                    }
+                            )
+                            IconButton(onClick = {
+                                viewModel.removeSongFromPlaylist(playlist, song)
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Remove song")
+                            }
+                        }
                     }
                 }
             }

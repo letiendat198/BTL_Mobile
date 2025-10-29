@@ -277,4 +277,47 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
             }
         }
     }
+
+    /**
+     * Xóa một bài hát khỏi playlist
+     */
+    fun removeSongFromPlaylist(playlist: Playlist, song: SongWithArtists) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                playlistDao.deleteSongFromPlaylist(playlist.playlistId, song.song.songId)
+                // Cập nhật lại danh sách bài hát của playlist đang xem
+                val updatedSongs = _playlistSongs.value.filterNot { it.song.songId == song.song.songId }
+                _playlistSongs.value = updatedSongs
+
+                Log.d("PlaylistViewModel", "Removed song ${song.song.songId} from playlist ${playlist.playlistId}")
+            } catch (e: Exception) {
+                Log.e("PlaylistViewModel", "Error removing song from playlist", e)
+            }
+        }
+    }
+
+    /**
+     * Thêm các bài hát đã chọn vào một playlist đã có
+     */
+    fun addSongsToExistingPlaylist(playlistId: Long, songIds: List<Long>) {
+        if (songIds.isEmpty()) {
+            Log.d("PlaylistViewModel", "No songs selected to add.")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val crossRefs = songIds.map { songId ->
+                    PlaylistSongCrossRef(playlistId = playlistId, songId = songId)
+                }
+                playlistDao.addSongsToPlaylist(crossRefs)
+                // Reload songs for the current playlist to reflect changes
+                if (_selectedPlaylist.value?.playlistId == playlistId) {
+                    loadSongsForPlaylist(playlistId)
+                }
+                Log.d("PlaylistViewModel", "Added ${crossRefs.size} songs to playlist $playlistId")
+            } catch (e: Exception) {
+                Log.e("PlaylistViewModel", "Error adding songs to existing playlist", e)
+            }
+        }
+    }
 }
