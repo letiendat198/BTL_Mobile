@@ -11,6 +11,7 @@ import androidx.navigation.toRoute
 import com.ptit.btl_mobile.ui.screens.home.HomeScreen
 import com.ptit.btl_mobile.ui.screens.library.LibraryScreen
 import com.ptit.btl_mobile.ui.screens.playlist.AddSongsToPlaylistScreen
+import com.ptit.btl_mobile.ui.screens.home.autoGeneratePlaylist.AutoGeneratePlaylistScreen
 import com.ptit.btl_mobile.ui.screens.playlist.CreatePlaylistScreen
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistDetailScreen
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistScreen
@@ -23,6 +24,7 @@ sealed class Destinations {
     @Serializable object CreatePlaylistScreen
     @Serializable object PlaylistScreen
     @Serializable object PlaylistDetailScreen
+    @Serializable object AutoGeneratePlaylistScreen
     @Serializable data class AddSongsToPlaylist(val playlistId: Long)
     @Serializable object LibraryScreen
 }
@@ -36,7 +38,16 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None }
     ) {
-        composable<Destinations.HomeScreen> { HomeScreen() }
+        composable<Destinations.HomeScreen> {
+            HomeScreen(
+                onNavigateToAutoPlaylist = {
+                    navController.navigate(Destinations.AutoGeneratePlaylistScreen)
+                },
+                onNavigateToPlaylistDetail = { _ ->
+                    navController.navigate(Destinations.PlaylistDetailScreen)
+                }
+            )
+        }
 
         composable<Destinations.PlaylistScreen> {
             PlaylistScreen(
@@ -76,6 +87,16 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable<Destinations.SelectSongsScreen> {
             SelectSongsScreen(
                 onBack = { navController.navigate(Destinations.PlaylistScreen) }
+            )
+        }
+
+        // ← THÊM MỚI: Auto Generate Playlist Screen
+        composable<Destinations.AutoGeneratePlaylistScreen> {
+            AutoGeneratePlaylistScreen(
+                onBack = { navController.popBackStack() },
+                onPlaylistGenerated = {
+                    navController.popBackStack()
+                }
             )
         }
 
