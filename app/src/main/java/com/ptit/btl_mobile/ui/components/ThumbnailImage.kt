@@ -14,7 +14,7 @@ import coil3.request.ImageRequest
 import com.ptit.btl_mobile.R
 
 @Composable
-fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier) {
+fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Fit) {
     if (imageUri != null){
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -22,7 +22,7 @@ fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier) {
                 .build(),
             placeholder = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
-            contentScale = ContentScale.Fit,
+            contentScale = contentScale,
             modifier = Modifier.clip(shape = RoundedCornerShape(5.dp)).then(modifier)
         )
     }
@@ -30,6 +30,7 @@ fun ThumbnailImage(imageUri: String?, modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
+            contentScale = contentScale,
             modifier = Modifier.clip(shape = RoundedCornerShape(5.dp)).then(modifier)
         )
     }
