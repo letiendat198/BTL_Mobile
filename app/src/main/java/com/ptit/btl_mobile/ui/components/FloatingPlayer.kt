@@ -64,7 +64,7 @@ fun FloatingPlayer(
                 modifier = modifier
                     .fillMaxWidth()
                     .clip(shape = RoundedCornerShape(5.dp))
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
                     .padding(5.dp)
                     .draggable(
                         orientation = Orientation.Vertical,

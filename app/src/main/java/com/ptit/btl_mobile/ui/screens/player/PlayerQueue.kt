@@ -25,7 +25,8 @@ fun PlayerQueue(viewModel: PlayerViewModel) {
             fontWeight = FontWeight.SemiBold
         )
         SongList(
-            songs = viewModel.currentQueue.value
+            songs = viewModel.currentQueue.value,
+            snapToCurrentSong = true
         )
     }
 }
