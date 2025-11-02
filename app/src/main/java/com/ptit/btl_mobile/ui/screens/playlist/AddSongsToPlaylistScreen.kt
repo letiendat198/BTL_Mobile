@@ -3,35 +3,20 @@ package com.ptit.btl_mobile.ui.screens.playlist
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ptit.btl_mobile.model.database.SongWithArtists
 import com.ptit.btl_mobile.ui.components.SongEntry
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,13 +30,56 @@ fun AddSongsToPlaylistScreen(
 
     val allSongs by viewModel.allSongs.collectAsState()
     val songsInPlaylist by viewModel.playlistSongs.collectAsState()
-    val selectedSongIds = remember { mutableStateListOf<Long>() }
 
-    // Load songs for the playlist when the screen is first composed
+    var searchQuery by remember { mutableStateOf("") }
+    var sortByTitle by remember { mutableStateOf(true) }
+    var selectedArtist by remember { mutableStateOf<String?>(null) }
+
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    val localSelected = remember { mutableStateListOf<Long>() }
+
     LaunchedEffect(playlistId) {
         viewModel.loadSongsForPlaylist(playlistId)
-        // Clear any previous selections when entering the screen
         viewModel.clearSongSelection()
+        localSelected.clear()
+    }
+
+    // Filter by search
+    var filteredSongs = allSongs.filter {
+        it.song.name.contains(searchQuery, ignoreCase = true) ||
+                it.artists.any { a -> a.name.contains(searchQuery, ignoreCase = true) }
+    }
+
+    // Filter by artist
+    selectedArtist?.let {
+        filteredSongs = filteredSongs.filter { s -> s.artists.any { it.name == selectedArtist } }
+    }
+
+    // Sort
+    filteredSongs = if (sortByTitle)
+        filteredSongs.sortedBy { it.song.name }
+    else
+        filteredSongs.sortedBy { it.artists.firstOrNull()?.name ?: "" }
+
+    val songsInPlaylistIds = songsInPlaylist.map { it.song.songId }.toSet()
+
+    fun toggle(id: Long) {
+        if (localSelected.contains(id)) localSelected.remove(id)
+        else localSelected.add(id)
+
+        viewModel.toggleSongSelection(id)
+    }
+
+    fun selectAllFiltered() {
+        filteredSongs.forEach {
+            val id = it.song.songId
+            if (!songsInPlaylistIds.contains(id) && !localSelected.contains(id)) {
+                localSelected.add(id)
+                viewModel.toggleSongSelection(id)
+            }
+        }
     }
 
     Scaffold(
@@ -60,73 +88,158 @@ fun AddSongsToPlaylistScreen(
                 title = { Text("Add Songs") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    TextButton(onClick = {
-                        viewModel.addSongsToExistingPlaylist(playlistId, selectedSongIds)
-                        onBack()
-                    }) {
-                        Text("DONE")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 }
             )
+        },
+        snackbarHost = { SnackbarHost(snackbar) },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = {
+                    viewModel.addSongsToExistingPlaylist(playlistId, localSelected.toList())
+                    scope.launch { snackbar.showSnackbar("Added ${localSelected.size} songs") }
+                    onBack()
+                },
+                icon = { Icon(Icons.Default.Done, null) },
+                text = { Text("Done (${localSelected.size})") }
+            )
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            val songIdsInPlaylist = songsInPlaylist.map { it.song.songId }.toSet()
+    ) { pad ->
 
-            items(allSongs, key = { it.song.songId }) { song ->
-                val isSelected = selectedSongIds.contains(song.song.songId)
-                val isInPlaylist = songIdsInPlaylist.contains(song.song.songId)
+        Column(Modifier.padding(pad)) {
 
-                SelectableSongRow(
-                    song = song,
-                    isSelected = isSelected,
-                    isEnabled = !isInPlaylist,
-                    onToggleSelection = {
-                        if (!isInPlaylist) {
-                            viewModel.toggleSongSelection(song.song.songId)
-                            // Sync local list with ViewModel's list
-                            if (selectedSongIds.contains(song.song.songId)) {
-                                selectedSongIds.remove(song.song.songId)
-                            } else {
-                                selectedSongIds.add(song.song.songId)
-                            }
-                        }
-                    }
+            // Search
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Default.Search, null) },
+                placeholder = { Text("Search songs...") }
+            )
+
+            // Sort + Artist Filter + Select All
+            Row(Modifier.padding(horizontal = 8.dp)) {
+                TextButton(onClick = { sortByTitle = !sortByTitle }) {
+                    Text(if (sortByTitle) "Sort: Title" else "Sort: Artist")
+                }
+                Spacer(Modifier.width(8.dp))
+                ArtistPicker(
+                    artists = allSongs.flatMap { it.artists.map { a -> a.name } }.toSet().toList(),
+                    selected = selectedArtist,
+                    onSelect = { selectedArtist = it }
                 )
+
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { selectAllFiltered() }) {
+                    Text("Select all")
+                }
+            }
+
+            if (filteredSongs.isEmpty()) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Text("No results")
+                }
+                return@Scaffold
+            }
+
+            LazyColumn {
+                items(filteredSongs) { song ->
+                    val id = song.song.songId
+                    val inPlaylist = songsInPlaylistIds.contains(id)
+                    val selected = localSelected.contains(id)
+
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !inPlaylist) { toggle(id) }
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = selected || inPlaylist,
+                            onCheckedChange = { if (!inPlaylist) toggle(id) },
+                            enabled = !inPlaylist
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        SongEntry(song)
+                    }
+                }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectableSongRow(
-    song: SongWithArtists,
-    isSelected: Boolean,
-    isEnabled: Boolean,
-    onToggleSelection: () -> Unit
+private fun ArtistPicker(
+    artists: List<String>,
+    selected: String?,
+    onSelect: (String?) -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = isEnabled, onClick = onToggleSelection)
-            .padding(horizontal = 8.dp)
-    ) {
-        Checkbox(
-            checked = isSelected || !isEnabled, // Checked if selected or disabled (already in playlist)
-            onCheckedChange = { onToggleSelection() },
-            enabled = isEnabled
-        )
-        Box(modifier = Modifier.weight(1f)) {
-             SongEntry(song = song, modifier = Modifier.padding(start = 8.dp))
+    var showSheet by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+
+    val filtered = remember(query, artists) {
+        artists.filter { it.contains(query, ignoreCase = true) }
+    }
+
+    TextButton(onClick = { showSheet = true }) {
+        Text(selected ?: "Artist")
+        Icon(Icons.Default.ArrowDropDown, contentDescription = null)
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    placeholder = { Text("Search artist...") },
+                    singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                // "All" option
+                ListItem(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onSelect(null)
+                            showSheet = false
+                        },
+                    headlineContent = { Text("All") }
+                )
+
+                Spacer(Modifier.height(4.dp))
+
+                LazyColumn {
+                    items(filtered) { artist ->
+                        ListItem(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onSelect(artist)
+                                    showSheet = false
+                                },
+                            headlineContent = { Text(artist) }
+                        )
+                    }
+
+                    item { Spacer(Modifier.height(20.dp)) }
+                }
+            }
         }
     }
 }
