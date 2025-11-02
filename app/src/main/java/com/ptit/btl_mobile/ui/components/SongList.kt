@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ptit.btl_mobile.MainViewModel
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Song
@@ -50,8 +51,10 @@ fun SongList(
     isSelecting: Boolean = false,
     snapToCurrentSong: Boolean = false,
     customState: LazyListState? = null,
+    header: @Composable () -> Unit = {},
     onSelectChange: (selectedSong: Map<SongWithArtists, Boolean>) -> Unit = {},
-    onClick: (song: SongWithArtists) -> Unit = {}
+    onClick: (song: SongWithArtists) -> Unit = {},
+    entryOptions: List<Option> = listOf()
 ) {
     val checkStates = remember { SnapshotStateList(songs.size) {false} }
     var selectedSongs = remember {mapOf<SongWithArtists, Boolean>()}
@@ -59,7 +62,12 @@ fun SongList(
 
     // TODO: CAREFULL!! HERE WE ASSUME THIS COMPOSABLE IS BOUND TO AN ACTIVITY
     // IT SHOULD BE!
-    val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+    val viewModel = viewModel<PlayerViewModel>(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
+    val mainViewModel: MainViewModel = viewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
 
     LaunchedEffect(Unit) {
         if (snapToCurrentSong && songs === viewModel.currentQueue.value) {
@@ -73,6 +81,9 @@ fun SongList(
         modifier = Modifier.fillMaxHeight(),
         state = listState
     ) {
+        item {
+            header()
+        }
         itemsIndexed(songs) { index, song ->
             Row {
                 if (isSelecting) {
@@ -95,7 +106,10 @@ fun SongList(
                             // TODO: REMOVE ON CLICK?
                             onClick(song)
                         },
-                    isPlaying = song.song.songId == viewModel.currentSong.value?.song?.songId
+                    isPlaying = song.song.songId == viewModel.currentSong.value?.song?.songId,
+                    onOptionClick = {
+                        mainViewModel.showMenuWithOptions(entryOptions)
+                    }
                 )
             }
         }
@@ -103,7 +117,12 @@ fun SongList(
 }
 
 @Composable
-fun SongEntry(song: SongWithArtists, modifier: Modifier = Modifier, isPlaying: Boolean = false) {
+fun SongEntry(
+    song: SongWithArtists,
+    modifier: Modifier = Modifier,
+    isPlaying: Boolean = false,
+    onOptionClick: () -> Unit = {}
+) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -147,6 +166,14 @@ fun SongEntry(song: SongWithArtists, modifier: Modifier = Modifier, isPlaying: B
             )
         }
 
+        Icon(
+            painter = painterResource(R.drawable.more_vert),
+            contentDescription = "Options",
+            modifier = Modifier
+                .size(30.dp)
+                .padding(5.dp)
+                .clickable(onClick = onOptionClick)
+        )
     }
 }
 
