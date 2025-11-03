@@ -18,6 +18,10 @@ import com.ptit.btl_mobile.ui.screens.playlist.PlaylistDetailScreen
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistScreen
 import com.ptit.btl_mobile.ui.screens.playlist.SelectSongsScreen
 import kotlinx.serialization.Serializable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.ptit.btl_mobile.ui.screens.library.detail.AlbumDetailScreen
+import com.ptit.btl_mobile.ui.screens.library.detail.ArtistDetailScreen
 
 sealed class Destinations {
     @Serializable object HomeScreen
@@ -105,8 +109,33 @@ fun AppNavHost(
             )
         }
 
+        composable(
+            route = "library/album/{albumId}",
+            arguments = listOf(navArgument("albumId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val albumId = backStackEntry.arguments?.getLong("albumId") ?: 0L
+            AlbumDetailScreen(
+                albumId = albumId,
+                navController = navController
+            )
+        }
+
+        composable(
+            route = "library/artist/{artistId}",
+            arguments = listOf(navArgument("artistId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val artistId = backStackEntry.arguments?.getLong("artistId") ?: 0L
+            ArtistDetailScreen(
+                artistId = artistId,
+                navController = navController
+            )
+        }
+
         composable<Destinations.LibraryScreen> {
-            LibraryScreen(onSetTopAppBar = onSetTopAppBar)
+            LibraryScreen(
+                navController = navController,
+                onSetTopAppBar = onSetTopAppBar
+            )
         }
     }
 }

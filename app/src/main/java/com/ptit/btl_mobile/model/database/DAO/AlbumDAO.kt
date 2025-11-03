@@ -10,6 +10,7 @@ import com.ptit.btl_mobile.model.database.Album
 import com.ptit.btl_mobile.model.database.AlbumArtistCrossRef
 import com.ptit.btl_mobile.model.database.AlbumWithArtists
 import com.ptit.btl_mobile.model.database.AlbumWithSongs
+import com.ptit.btl_mobile.model.database.Song
 
 @Dao
 interface AlbumDAO {
@@ -25,9 +26,6 @@ interface AlbumDAO {
     @Delete
     suspend fun delete(album: Album)
 
-    @Query("SELECT * FROM Album")
-    suspend fun getAll(): List<Album>
-
     @Transaction
     @Query("SELECT * FROM Album")
     suspend fun getAllWithArtists(): List<AlbumWithArtists>
@@ -35,4 +33,38 @@ interface AlbumDAO {
     @Transaction
     @Query("SELECT * FROM Album")
     suspend fun getAllWithSongs(): List<AlbumWithSongs>
+
+    @Query("SELECT * FROM Album ORDER BY name ASC")
+    suspend fun getAll(): List<Album>
+
+    @Query("SELECT * FROM Album WHERE albumId = :albumId")
+    suspend fun getById(albumId: Long): Album?
+
+    @Query("""
+        SELECT a.* FROM Album a
+        JOIN AlbumArtistCrossRef aac ON a.albumId = aac.albumId
+        WHERE aac.artistId = :artistId
+        ORDER BY a.year DESC, a.name ASC
+    """)
+    suspend fun getByArtistId(artistId: Long): List<Album>
+
+    @Query("SELECT * FROM Song WHERE songAlbumId = :albumId ORDER BY name ASC")
+    suspend fun getSongsByAlbumId(albumId: Long): List<Song>
+
+    // Query để lấy số lượng bài hát trong album
+    @Query("SELECT COUNT(*) FROM Song WHERE songAlbumId = :albumId")
+    suspend fun getSongCountByAlbumId(albumId: Long): Int
+
+    // Query để lấy tên artist đầu tiên của album
+    @Query("""
+        SELECT ar.name FROM Artist ar
+        JOIN AlbumArtistCrossRef aac ON ar.artistId = aac.artistId
+        WHERE aac.albumId = :albumId
+        LIMIT 1
+    """)
+    suspend fun getFirstArtistNameByAlbumId(albumId: Long): String?
+
+    @Transaction
+    @Query("SELECT * FROM Album WHERE albumId = :albumId")
+    suspend fun getAlbumWithSongs(albumId: Long): AlbumWithSongs?
 }

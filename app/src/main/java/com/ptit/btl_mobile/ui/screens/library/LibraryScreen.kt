@@ -5,16 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.PrimaryTabRow
@@ -24,58 +21,61 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.ui.components.Option
 import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
+import com.ptit.btl_mobile.ui.screens.library.tabs.AlbumsTab
+import com.ptit.btl_mobile.ui.screens.library.tabs.ArtistsTab
 
 enum class LibraryTabs(val index: Int, val title: String) {
-    SONG(0, "Song"),
-    ARTIST(1, "Artist"),
-    ALBUM(2, "Album")
+    SONG(0, "Bài hát"),
+    ALBUM(1, "Albums"),
+    ARTIST(2, "Nghệ sĩ")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
-    onSetTopAppBar: (TopAppBarContent) -> Unit
+    navController: NavController = rememberNavController(),
+    onSetTopAppBar: (TopAppBarContent) -> Unit = {}
 ) {
     // Using MainActivity store owner allow view model
     // to be maintained even after user navigated away
-    // TODO: CAREFULL!! HERE WE ASSUME THIS COMPOSABLE IS BOUND TO AN ACTIVITY
-    // IT SHOULD BE!
-    val viewModel: LibraryViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+    val viewModel: LibraryViewModel = viewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
     Log.d("LIBRARY_SCREEN", "Recomposed when song list size is: " + viewModel.songs.size)
 
     var selectedTab by viewModel.selectedTab
 
     onSetTopAppBar(TopAppBarContent(
-        title = "Library",
+        title = "Thư viện",
     ))
+
     Column {
         PrimaryTabRow(
             selectedTabIndex = selectedTab
         ) {
-            enumValues<LibraryTabs>().forEach { libraryTabs ->
+            enumValues<LibraryTabs>().forEach { libraryTab ->
                 Tab(
-                    selected = selectedTab == libraryTabs.index,
+                    selected = selectedTab == libraryTab.index,
                     onClick = {
-                        selectedTab = libraryTabs.index
+                        selectedTab = libraryTab.index
                     },
                     text = {
-                        Text(libraryTabs.title)
+                        Text(libraryTab.title)
                     }
                 )
             }
@@ -83,19 +83,25 @@ fun LibraryScreen(
 
         when(selectedTab) {
             0 -> LibrarySongTab(viewModel)
+            1 -> AlbumsTab(
+                navController = navController,
+                viewModel = viewModel
+            )
+            2 -> ArtistsTab(
+                navController = navController,
+                viewModel = viewModel
+            )
         }
     }
-
-
 }
 
 @Composable
 fun LibrarySongTab(viewModel: LibraryViewModel) {
     var searchQuery by viewModel.searchQuery
     // Persist song list state in Library view model
-    viewModel.listState = viewModel.listState?:rememberLazyListState()
+    viewModel.listState = viewModel.listState ?: rememberLazyListState()
 
-    val entryOptions = listOf<Option>(
+    val entryOptions = listOf(
         Option(
             title = "Delete song from device"
         )
@@ -130,16 +136,18 @@ fun LibrarySongTab(viewModel: LibraryViewModel) {
                 disabledIndicatorColor = Color.Transparent
             ),
             trailingIcon = {
-                if (!searchQuery.isEmpty()) Icon(
-                    painter = painterResource(R.drawable.close_small),
-                    contentDescription = "Clear search",
-                    modifier = Modifier.clickable {
-                        searchQuery = ""
-                        viewModel.filterSongName("")
-                    }
-                )
+                if (searchQuery.isNotEmpty()) {
+                    Icon(
+                        painter = painterResource(R.drawable.close_small),
+                        contentDescription = "Clear search",
+                        modifier = Modifier.clickable {
+                            searchQuery = ""
+                            viewModel.filterSongName("")
+                        }
+                    )
+                }
             },
-            modifier = Modifier // To change height, you will need BasicTextField. Ain't gonna bother with that
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(0.dp, 10.dp)
                 .clip(shape = RoundedCornerShape(10.dp))
