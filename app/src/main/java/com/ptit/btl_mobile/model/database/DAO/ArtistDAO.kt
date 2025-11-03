@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ptit.btl_mobile.model.database.Artist
+import com.ptit.btl_mobile.model.database.Song
 
 @Dao
 interface ArtistDAO {
@@ -18,9 +19,6 @@ interface ArtistDAO {
     @Delete
     suspend fun delete(artist: Artist)
 
-    @Query("SELECT * FROM Artist")
-    suspend fun getAll(): List<Artist>
-
     @Query("SELECT * FROM Artist WHERE name = :name")
     suspend fun searchArtistByName(name: String): List<Artist>
 
@@ -29,4 +27,33 @@ interface ArtistDAO {
         if (artists.isNotEmpty()) return artists[0].artistId // Normally artist name won't duplicate
         else return insertArtist(artist)
     }
+    @Query("SELECT * FROM Artist ORDER BY name ASC")
+    suspend fun getAll(): List<Artist>
+
+    @Query("SELECT * FROM Artist WHERE artistId = :artistId")
+    suspend fun getById(artistId: Long): Artist?
+
+    @Query("""
+        SELECT s.* FROM Song s
+        JOIN SongArtistCrossRef sac ON s.songId = sac.songId
+        WHERE sac.artistId = :artistId
+        ORDER BY s.name ASC
+    """)
+    suspend fun getSongsByArtistId(artistId: Long): List<Song>
+
+    // Query để lấy số lượng album của artist
+    @Query("""
+        SELECT COUNT(DISTINCT aac.albumId) 
+        FROM AlbumArtistCrossRef aac 
+        WHERE aac.artistId = :artistId
+    """)
+    suspend fun getAlbumCountByArtistId(artistId: Long): Int
+
+    // Query để lấy số lượng bài hát của artist
+    @Query("""
+        SELECT COUNT(DISTINCT sac.songId) 
+        FROM SongArtistCrossRef sac 
+        WHERE sac.artistId = :artistId
+    """)
+    suspend fun getSongCountByArtistId(artistId: Long): Int
 }
