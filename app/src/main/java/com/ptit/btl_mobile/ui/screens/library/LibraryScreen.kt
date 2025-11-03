@@ -40,9 +40,9 @@ import com.ptit.btl_mobile.ui.screens.library.tabs.AlbumsTab
 import com.ptit.btl_mobile.ui.screens.library.tabs.ArtistsTab
 
 enum class LibraryTabs(val index: Int, val title: String) {
-    SONG(0, "Bài hát"),
+    SONG(0, "Songs"),
     ALBUM(1, "Albums"),
-    ARTIST(2, "Nghệ sĩ")
+    ARTIST(2, "Artists")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,7 +61,7 @@ fun LibraryScreen(
     var selectedTab by viewModel.selectedTab
 
     onSetTopAppBar(TopAppBarContent(
-        title = "Thư viện",
+        title = "Library",
     ))
 
     Column {

@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.ui.screens.library.components
 
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -30,7 +31,7 @@ fun AlbumCard(
         ) {
             ThumbnailImage(
                 imageUri = albumInfo.album.imageUri,
-                size = 120.dp
+                modifier = Modifier.size(120.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -41,7 +42,7 @@ fun AlbumCard(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().basicMarquee()
             )
 
             Text(
@@ -51,11 +52,11 @@ fun AlbumCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().basicMarquee()
             )
 
             Text(
-                text = "${albumInfo.songCount} bài hát",
+                text = "${albumInfo.songCount} songs",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

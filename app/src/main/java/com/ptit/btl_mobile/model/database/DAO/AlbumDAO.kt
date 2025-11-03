@@ -10,18 +10,27 @@ import com.ptit.btl_mobile.model.database.Album
 import com.ptit.btl_mobile.model.database.AlbumArtistCrossRef
 import com.ptit.btl_mobile.model.database.AlbumWithArtists
 import com.ptit.btl_mobile.model.database.AlbumWithSongs
+import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Song
+import com.ptit.btl_mobile.model.database.SongWithArtists
 
 @Dao
 interface AlbumDAO {
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    // Name may collide. Replace will change PK which is not good => Ignore
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insertAll(vararg albums: Album): List<Long>
 
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insertAlbum(album: Album): Long
 
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insertAlbumWithArtists(ref: AlbumArtistCrossRef)
+
+    suspend fun safeInsertAlbum(album: Album): Long {
+        val albums = getAlbumsByName(album.name)
+        if (albums.isNotEmpty()) return albums[0].albumId // Normally artist name won't duplicate
+        else return insertAlbum(album)
+    }
 
     @Delete
     suspend fun delete(album: Album)
@@ -49,7 +58,7 @@ interface AlbumDAO {
     suspend fun getByArtistId(artistId: Long): List<Album>
 
     @Query("SELECT * FROM Song WHERE songAlbumId = :albumId ORDER BY name ASC")
-    suspend fun getSongsByAlbumId(albumId: Long): List<Song>
+    suspend fun getSongsByAlbumId(albumId: Long): List<SongWithArtists>
 
     // Query để lấy số lượng bài hát trong album
     @Query("SELECT COUNT(*) FROM Song WHERE songAlbumId = :albumId")
@@ -67,4 +76,7 @@ interface AlbumDAO {
     @Transaction
     @Query("SELECT * FROM Album WHERE albumId = :albumId")
     suspend fun getAlbumWithSongs(albumId: Long): AlbumWithSongs?
+
+    @Query("SELECT * FROM Album WHERE name = :name")
+    suspend fun getAlbumsByName(name: String): List<Album>
 }

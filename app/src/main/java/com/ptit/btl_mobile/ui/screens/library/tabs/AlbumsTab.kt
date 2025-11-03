@@ -18,7 +18,7 @@ fun AlbumsTab(
     val albums = viewModel.albumsWithInfo
 
     if (albums.isEmpty()) {
-        EmptyState(message = "Chưa có album nào")
+        EmptyState(message = "No album found")
     } else {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),

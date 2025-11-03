@@ -21,23 +21,10 @@ fun ThumbnailImage(
     imageUri: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit,
-    size: Dp? = null,           // THÊM MỚI
     isCircle: Boolean = false    // THÊM MỚI
 ) {
     // Xác định shape dựa trên isCircle
     val shape = if (isCircle) CircleShape else RoundedCornerShape(5.dp)
-
-    // Áp dụng size nếu có
-    val finalModifier = if (size != null) {
-        Modifier
-            .size(size)
-            .clip(shape = shape)
-            .then(modifier)
-    } else {
-        Modifier
-            .clip(shape = shape)
-            .then(modifier)
-    }
 
     if (imageUri != null) {
         AsyncImage(
@@ -47,14 +34,14 @@ fun ThumbnailImage(
             placeholder = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
             contentScale = contentScale,
-            modifier = finalModifier
+            modifier = Modifier.clip(shape).then(modifier)
         )
     } else {
         Image(
             painter = painterResource(R.drawable.ic_music_sample),
             contentDescription = "Song image",
             contentScale = contentScale,
-            modifier = finalModifier
+            modifier = Modifier.clip(shape).then(modifier)
         )
     }
 }

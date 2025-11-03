@@ -93,7 +93,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
                     // If there's album info
                     if (albumWithArtists != null) {
                         // Add album and album artists to db
-                        val albumId = db.AlbumDAO().insertAlbum(albumWithArtists.album)
+                        val albumId = db.AlbumDAO().safeInsertAlbum(albumWithArtists.album)
                         albumWithArtists.artists.forEach { artist ->
                             // Using non-safe insert won't return duplicated artist id
                             val artistId = db.ArtistDAO().safeInsertArtist(artist)

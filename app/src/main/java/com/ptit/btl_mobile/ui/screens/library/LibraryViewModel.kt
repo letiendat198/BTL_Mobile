@@ -50,7 +50,7 @@ class LibraryViewModel: ViewModel() {
     private var _selectedAlbumSongCount: Int = 0
     var selectedAlbumSongCount by mutableStateOf(_selectedAlbumSongCount)
 
-    private var _albumSongs = listOf<Song>()
+    private var _albumSongs = listOf<SongWithArtists>()
     var albumSongs by mutableStateOf(_albumSongs)
 
     private var _selectedArtist: Artist? = null
@@ -62,7 +62,7 @@ class LibraryViewModel: ViewModel() {
     private var _selectedArtistSongCount: Int = 0
     var selectedArtistSongCount by mutableStateOf(_selectedArtistSongCount)
 
-    private var _artistSongs = listOf<Song>()
+    private var _artistSongs = listOf<SongWithArtists>()
     var artistSongs by mutableStateOf(_artistSongs)
 
     private var _artistAlbums = listOf<AlbumWithInfo>()
