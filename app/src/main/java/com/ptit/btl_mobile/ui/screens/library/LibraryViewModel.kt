@@ -3,6 +3,7 @@ package com.ptit.btl_mobile.ui.screens.library
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -27,6 +28,8 @@ class LibraryViewModel: ViewModel() {
     // ===== CODE CŨ - GIỮ NGUYÊN =====
     private var _songs = listOf<SongWithArtists>()
     var songs by mutableStateOf(_songs)
+    var searchQuery = mutableStateOf("")
+    var selectedTab = mutableIntStateOf(0);
     var listState: LazyListState? = null
 
     // ===== ALBUMS =====
@@ -159,5 +162,16 @@ class LibraryViewModel: ViewModel() {
 
             Log.d("LIBRARY_VIEW_MODEL", "Loaded artist: ${selectedArtist?.name}")
         }
+    }
+
+    fun filterSongName(query: String) {
+        if (query.isEmpty()) {
+            songs = _songs
+            return
+        }
+
+        songs = _songs.filter { (song, artists) ->
+            song.name.contains(query, true) ||
+                    artists.any {artist -> artist.name.contains(query, true)} }
     }
 }

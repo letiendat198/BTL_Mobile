@@ -35,32 +35,30 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
     val draft by viewModel.playlistDraft.collectAsState()
     val allSongs by viewModel.allSongs.collectAsState()
 
-    // Local state cho UI
     var playlistName by remember { mutableStateOf(draft.name) }
     var imageUri by remember { mutableStateOf<String?>(draft.imageUri) }
     var tempSelectedUri by remember { mutableStateOf<Uri?>(draft.tempImageUri) }
 
-    // Đồng bộ state khi draft thay đổi
-    LaunchedEffect(draft) {
+    // ✅ Đồng bộ tên playlist, nhưng KHÔNG reset ảnh
+    LaunchedEffect(draft.name) {
         playlistName = draft.name
-        imageUri = draft.imageUri
-        tempSelectedUri = draft.tempImageUri
     }
 
-    // Khởi tạo draft mới nếu chưa có
-    LaunchedEffect(Unit) {
-        if (draft.name.isEmpty() && draft.imageUri == null && draft.selectedSongIds.isEmpty()) {
-            viewModel.startCreatingPlaylist()
-        }
-    }
-
-    // Image picker launcher
+    // ✅ Image picker
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri: Uri? ->
             if (uri != null) {
                 tempSelectedUri = uri
                 imageUri = uri.toString()
+
+                // ✅ Lưu ảnh vào draft ngay lập tức
+                viewModel.saveDraftInfo(
+                    name = playlistName,
+                    imageUri = uri.toString(),
+                    tempImageUri = uri
+                )
+
                 Log.d("CreatePlaylistScreen", "Selected image: $uri")
             }
         }
@@ -81,12 +79,10 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
                 actions = {
                     TextButton(
                         onClick = {
-                            // Lấy ảnh bài hát đầu tiên làm fallback
                             val firstSongImage = allSongs
                                 .find { it.song.songId == viewModel.selectedSongIds.firstOrNull() }
                                 ?.song?.imageUri
 
-                            // Lưu thông tin draft
                             viewModel.saveDraftInfo(
                                 name = playlistName,
                                 imageUri = imageUri ?: firstSongImage,
@@ -116,7 +112,8 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Preview ảnh
+
+                // ✅ Preview ảnh
                 Box(
                     modifier = Modifier
                         .size(180.dp)
@@ -189,38 +186,6 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
                                     color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                 )
                             }
-                        }
-                    }
-                }
-
-                if (draft.selectedSongIds.isEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "Tips:",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            Text(
-                                text = "• Enter a name for your playlist",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = "• Optionally select a custom image",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = "• Click 'Next' to add songs",
-                                style = MaterialTheme.typography.bodySmall
-                            )
                         }
                     }
                 }

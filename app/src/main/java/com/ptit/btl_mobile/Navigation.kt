@@ -8,6 +8,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.home.HomeScreen
 import com.ptit.btl_mobile.ui.screens.library.LibraryScreen
 import com.ptit.btl_mobile.ui.screens.playlist.AddSongsToPlaylistScreen
@@ -34,7 +35,11 @@ sealed class Destinations {
 }
 
 @Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+fun AppNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
+) {
     NavHost(
         navController = navController,
         modifier = modifier,
@@ -127,7 +132,10 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         }
 
         composable<Destinations.LibraryScreen> {
-            LibraryScreen(navController = navController)
+            LibraryScreen(
+                navController = navController,
+                onSetTopAppBar = onSetTopAppBar
+            )
         }
     }
 }
