@@ -7,13 +7,15 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Song
+import com.ptit.btl_mobile.model.database.SongWithArtists
 
 @Dao
 interface ArtistDAO {
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    // Name may collide. Replace will change PK which is not good => Ignore
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insertAll(vararg artists: Artist): List<Long>
 
-    @Insert(onConflict = OnConflictStrategy.Companion.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insertArtist(artist: Artist): Long
 
     @Delete
@@ -39,7 +41,7 @@ interface ArtistDAO {
         WHERE sac.artistId = :artistId
         ORDER BY s.name ASC
     """)
-    suspend fun getSongsByArtistId(artistId: Long): List<Song>
+    suspend fun getSongsByArtistId(artistId: Long): List<SongWithArtists>
 
     // Query để lấy số lượng album của artist
     @Query("""

@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
 import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 
@@ -41,10 +43,10 @@ fun AlbumDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(album?.name ?: "") },
+                title = { Text(album?.name ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, "Quay lại")
+                        Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
             )
@@ -65,7 +67,7 @@ fun AlbumDetailScreen(
                 ) {
                     ThumbnailImage(
                         imageUri = albumData.imageUri,
-                        size = 200.dp
+                        modifier = Modifier.size(200.dp)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -93,41 +95,9 @@ fun AlbumDetailScreen(
             }
 
             // Song List
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                items(songs.size) { index ->
-                    val song = songs[index]
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { /* TODO: Play song */ }
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ThumbnailImage(
-                            imageUri = song.imageUri,
-                            size = 50.dp
-                        )
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = song.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = formatDuration(song.duration),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
+            SongList(
+                songs = songs
+            )
         }
     }
 }

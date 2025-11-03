@@ -1,21 +1,20 @@
 package com.ptit.btl_mobile.ui.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.ptit.btl_mobile.R
 
 @Composable
 fun EmptyState(
     message: String,
-    icon: ImageVector = Icons.Filled.MusicNote,
+    iconResource: Int = R.drawable.music_note,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -27,7 +26,7 @@ fun EmptyState(
             verticalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = painterResource(iconResource),
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)

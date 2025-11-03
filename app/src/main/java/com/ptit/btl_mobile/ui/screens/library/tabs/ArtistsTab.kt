@@ -18,7 +18,7 @@ fun ArtistsTab(
     val artists = viewModel.artistsWithInfo
 
     if (artists.isEmpty()) {
-        EmptyState(message = "Chưa có nghệ sĩ nào")
+        EmptyState(message = "No artist found")
     } else {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -166,14 +167,18 @@ fun SongEntry(
             )
         }
 
-        Icon(
-            painter = painterResource(R.drawable.more_vert),
-            contentDescription = "Options",
+        IconButton(
+            onClick = onOptionClick,
             modifier = Modifier
                 .size(30.dp)
                 .padding(5.dp)
-                .clickable(onClick = onOptionClick)
-        )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.more_vert),
+                contentDescription = "Options",
+            )
+        }
+
     }
 }
 
