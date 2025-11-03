@@ -24,6 +24,7 @@ fun ThumbnailImage(
     isCircle: Boolean = false    // THÊM MỚI
 ) {
     // Xác định shape dựa trên isCircle
+    // TODO: For rounded corner to works, modifier aspectRatio or size must be given. fillMaxSize won't work
     val shape = if (isCircle) CircleShape else RoundedCornerShape(5.dp)
 
     if (imageUri != null) {

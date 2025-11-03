@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -112,10 +113,13 @@ fun PlayerScreen(
                                         modifier = Modifier
                                             .weight(1F)
                                             .fillMaxWidth()) {
-                                        ThumbnailImage( // TODO: WHY NOT ROUNDED
+                                        ThumbnailImage(
                                             song.song.imageUri,
                                             modifier = Modifier
-                                                .fillMaxWidth() // fillMaxSize won't show rounded corner
+                                                // Basically tell the image CONTAINER that it should only use height and width of 1:1 the image
+                                                // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
+                                                .aspectRatio(1f)
+                                                .fillMaxSize()
                                                 .sharedElement(
                                                     rememberSharedContentState(key = "image"),
                                                     animatedVisibilityScope = animatedContentScope
