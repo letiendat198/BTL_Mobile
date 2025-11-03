@@ -40,40 +40,127 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
     @RequiresExtension(extension = Build.VERSION_CODES.R, version = 1)
     fun updateOrReloadMedia() {
         scope.launch {
+//            val currentVersion = MediaStore.getVersion(context)
+//            val currentGeneration = MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL)
+//
+//            val cachedVersion = context.dataStore.data.map { value ->
+//                value[PreferencesKeys.MEDIASTORE_VERSION]
+//            }.firstOrNull()
+//            val cachedGeneration= context.dataStore.data.map { value ->
+//                value[PreferencesKeys.MEDIASTORE_GENERATION]
+//            }.firstOrNull()?:0
+//
+//            Log.d("MEDIA_LOADER", "Cached version: $cachedVersion. Current version: $currentVersion")
+//            Log.d("MEDIA_LOADER", "Cached generation: $cachedGeneration. Current generation: $currentGeneration")
+//
+//
+//            if (currentVersion == cachedVersion) {
+//                if (currentGeneration > cachedGeneration) loadMediaIntoDB(cachedGeneration)
+//            }
+//            else loadMediaIntoDB()
+//
+//            context.dataStore.edit { values ->
+//                values[PreferencesKeys.MEDIASTORE_VERSION] = currentVersion
+//            }
+//
+//            context.dataStore.edit { values ->
+//                values[PreferencesKeys.MEDIASTORE_GENERATION] = currentGeneration
+//            }
+            loadMediaIntoDB()
+
             val currentVersion = MediaStore.getVersion(context)
             val currentGeneration = MediaStore.getGeneration(context, MediaStore.VOLUME_EXTERNAL)
 
-            val cachedVersion = context.dataStore.data.map { value ->
-                value[PreferencesKeys.MEDIASTORE_VERSION]
-            }.firstOrNull()
-            val cachedGeneration= context.dataStore.data.map { value ->
-                value[PreferencesKeys.MEDIASTORE_GENERATION]
-            }.firstOrNull()?:0
-
-            Log.d("MEDIA_LOADER", "Cached version: $cachedVersion. Current version: $currentVersion")
-            Log.d("MEDIA_LOADER", "Cached generation: $cachedGeneration. Current generation: $currentGeneration")
-
-
-            if (currentVersion == cachedVersion) {
-                if (currentGeneration > cachedGeneration) loadMediaIntoDB(cachedGeneration)
-            }
-            else loadMediaIntoDB()
-
             context.dataStore.edit { values ->
                 values[PreferencesKeys.MEDIASTORE_VERSION] = currentVersion
-            }
-
-            context.dataStore.edit { values ->
                 values[PreferencesKeys.MEDIASTORE_GENERATION] = currentGeneration
             }
         }
     }
 
     // Either query all songs or songs added after <generation>
+//    fun loadMediaIntoDB(generation: Long? = null) {
+//        Toast.makeText(context, "Loading media on device...", Toast.LENGTH_LONG).show()
+//        scope.launch(Dispatchers.IO) {
+//            Log.d("MEDIA_LOADER", "Trying to load media...")
+//
+//            val selection = generation?.let { "${MediaStore.Audio.Media.GENERATION_ADDED} > ?" }
+//            val selectionArgs = generation?.let { arrayOf(generation.toString()) }
+//
+//            val db = Database.getInstance()
+//            context.contentResolver.query(
+//                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+//                null,
+//                selection,
+//                selectionArgs,
+//                null
+//            )?.use { cursor ->
+//                while (cursor.moveToNext()) {
+//                    var songWithArtists = readFromStoreToSong(cursor)
+//                    val albumWithArtists = readFromStoreToAlbum(cursor)
+//
+//                    // If there's album info
+//                    if (albumWithArtists != null) {
+//                        // Add album and album artists to db
+//                        val albumId = db.AlbumDAO().safeInsertAlbum(albumWithArtists.album)
+//                        albumWithArtists.artists.forEach { artist ->
+//                            // Using non-safe insert won't return duplicated artist id
+//                            val artistId = db.ArtistDAO().safeInsertArtist(artist)
+//                            db.AlbumDAO().insertAlbumWithArtists(AlbumArtistCrossRef(artistId, albumId))
+//                        }
+//
+//                        // Inefficient stuff to add albumId into song
+//                        songWithArtists = songWithArtists.copy(song = songWithArtists.song.copy(
+//                            songAlbumId = albumId
+//                        ))
+//                    }
+//
+//                    // Add song and song artists to db
+//                    val songId = db.SongDAO().insertSong(songWithArtists.song)
+//                    songWithArtists.artists.forEach { artist ->
+//                        val artistId = db.ArtistDAO().safeInsertArtist(artist)
+//                        db.SongDAO().insertSongWithArtists(SongArtistCrossRef(artistId, songId))
+//                    }
+//                }
+//            }
+//        }.invokeOnCompletion {
+//            scope.launch(Dispatchers.Main) {
+//                Toast.makeText(context, "Media loading completed!", Toast.LENGTH_SHORT).show()
+//            }
+//        }
+//    }
+
     fun loadMediaIntoDB(generation: Long? = null) {
         Toast.makeText(context, "Loading media on device...", Toast.LENGTH_LONG).show()
         scope.launch(Dispatchers.IO) {
             Log.d("MEDIA_LOADER", "Trying to load media...")
+
+            // Scan file thủ công và chờ hoàn thành
+            val musicDir = File("/sdcard/Music")
+            if (musicDir.exists()) {
+                val files = musicDir.listFiles()?.filter {
+                    it.extension in listOf("mp3", "wav", "m4a")
+                } ?: emptyList()
+
+                if (files.isNotEmpty()) {
+                    // Chờ scan hoàn thành
+                    withContext(Dispatchers.Main) {
+                        var scannedCount = 0
+                        files.forEach { file ->
+                            android.media.MediaScannerConnection.scanFile(
+                                context,
+                                arrayOf(file.absolutePath),
+                                null
+                            ) { path, uri ->
+                                Log.d("MEDIA_LOADER", "Scanned file: $path -> $uri")
+                                scannedCount++
+                            }
+                        }
+                    }
+                    // Chờ một chút để MediaStore cập nhật
+                    kotlinx.coroutines.delay(2000)
+                }
+            }
 
             val selection = generation?.let { "${MediaStore.Audio.Media.GENERATION_ADDED} > ?" }
             val selectionArgs = generation?.let { arrayOf(generation.toString()) }
@@ -86,6 +173,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
                 selectionArgs,
                 null
             )?.use { cursor ->
+                Log.d("MEDIA_LOADER", "Found ${cursor.count} songs")
                 while (cursor.moveToNext()) {
                     var songWithArtists = readFromStoreToSong(cursor)
                     val albumWithArtists = readFromStoreToAlbum(cursor)

@@ -22,6 +22,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.ptit.btl_mobile.ui.screens.library.detail.AlbumDetailScreen
 import com.ptit.btl_mobile.ui.screens.library.detail.ArtistDetailScreen
+import com.ptit.btl_mobile.ui.screens.lyrics.LyricsScreen
 
 sealed class Destinations {
     @Serializable object HomeScreen
@@ -135,6 +136,23 @@ fun AppNavHost(
             LibraryScreen(
                 navController = navController,
                 onSetTopAppBar = onSetTopAppBar
+            )
+        }
+
+        // ← THÊM MỚI: Lyrics Screen
+        composable(
+            route = "lyrics/{songId}/{songTitle}",
+            arguments = listOf(
+                navArgument("songId") { type = NavType.LongType },
+                navArgument("songTitle") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val songId = backStackEntry.arguments?.getLong("songId") ?: 0L
+            val songTitle = backStackEntry.arguments?.getString("songTitle") ?: ""
+            LyricsScreen(
+                songId = songId,
+                songTitle = songTitle,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
