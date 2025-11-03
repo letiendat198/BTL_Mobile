@@ -35,9 +35,11 @@ fun LyricsScreen(
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current as ComponentActivity
+
+    // Sửa: Thêm key để tạo ViewModel mới cho mỗi songId
     val viewModel: LyricsViewModel = viewModel(
         factory = LyricsViewModelFactory(context, songId),
-        viewModelStoreOwner = activity
+        key = "lyrics_$songId"
     )
 
     val playerViewModel: PlayerViewModel = viewModel(viewModelStoreOwner = activity)
