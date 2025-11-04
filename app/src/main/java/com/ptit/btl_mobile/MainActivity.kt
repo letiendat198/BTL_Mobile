@@ -53,6 +53,7 @@ import com.ptit.btl_mobile.model.database.Artist
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongArtistCrossRef
+import com.ptit.btl_mobile.model.lyrics.LyricsManager
 import com.ptit.btl_mobile.model.media.MediaLoader
 import com.ptit.btl_mobile.model.media.PlaybackService
 import com.ptit.btl_mobile.ui.components.FloatingPlayer
@@ -80,6 +81,9 @@ class MainActivity : ComponentActivity() {
         // Init database
         Database(this.applicationContext)
 
+        // lyric testing
+        LyricsManager(this).clearAllLyrics()
+
         // Request permission
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -90,13 +94,13 @@ class MainActivity : ComponentActivity() {
                 else {
                     Log.d("PERMISSION", "Permission denied")
                 }
-        }
+            }
 
         requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
 
         setContent {
             BTL_MobileTheme {
-                    AppNavLayout()
+                AppNavLayout()
             }
         }
     }
@@ -186,6 +190,10 @@ fun AppNavLayout() {
                             this@SharedTransitionLayout,
                             this@AnimatedContent,
                             onBack = {
+                                showPlayer = false
+                            },
+                            onNavigateToLyrics = { songId, songTitle ->
+                                navController.navigate("lyrics/$songId/$songTitle")
                                 showPlayer = false
                             }
                         )

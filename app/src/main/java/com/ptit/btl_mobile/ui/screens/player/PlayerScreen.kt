@@ -65,7 +65,8 @@ import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 fun PlayerScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedContentScope: AnimatedContentScope,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToLyrics: (Long, String) -> Unit
 ) {
     val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     // DO NOT REMEMBER STUFFS FROM VIEWMODEL
@@ -182,7 +183,7 @@ fun PlayerScreen(
                                     )
                             )
 
-                            FunctionRow(viewModel)
+                            FunctionRow(viewModel, onNavigateToLyrics)
                         }
                     }
                 }
@@ -192,11 +193,20 @@ fun PlayerScreen(
 }
 
 @Composable
-fun FunctionRow(viewModel: PlayerViewModel) {
+fun FunctionRow(
+    viewModel: PlayerViewModel,
+    onNavigateToLyrics: (Long, String) -> Unit
+) {
+    val currentSong by viewModel.currentSong
+
     Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
         modifier = Modifier.fillMaxWidth()) {
         IconButton(
-            onClick = {},
+            onClick = {
+                currentSong?.let { song ->
+                    onNavigateToLyrics(song.song.songId, song.song.name)
+                }
+            },
         ) {
             Icon(painter = painterResource(R.drawable.lyrics),
                 contentDescription = "Lyrics",
