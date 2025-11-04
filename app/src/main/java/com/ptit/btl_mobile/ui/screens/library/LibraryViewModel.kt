@@ -174,4 +174,8 @@ class LibraryViewModel: ViewModel() {
             song.name.contains(query, true) ||
                     artists.any {artist -> artist.name.contains(query, true)} }
     }
+
+    fun sortSong() {
+        songs = _songs.sortedBy { (song, artists) -> song.name }
+    }
 }
