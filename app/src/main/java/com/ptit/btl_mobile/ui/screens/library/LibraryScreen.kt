@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -62,6 +63,18 @@ fun LibraryScreen(
 
     onSetTopAppBar(TopAppBarContent(
         title = "Library",
+        actions = {
+            IconButton(
+                onClick = {
+                    viewModel.sortSong() // TODO: TEMP
+                }
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.sort),
+                    contentDescription = "Sort"
+                )
+            }
+        }
     ))
 
     Column {

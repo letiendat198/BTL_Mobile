@@ -175,6 +175,10 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
             )?.use { cursor ->
                 Log.d("MEDIA_LOADER", "Found ${cursor.count} songs")
                 while (cursor.moveToNext()) {
+                    val indexIsMusic = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.IS_MUSIC)
+                    val isMusic = cursor.getInt(indexIsMusic)
+                    if (isMusic == 0) continue
+
                     var songWithArtists = readFromStoreToSong(cursor)
                     val albumWithArtists = readFromStoreToAlbum(cursor)
 
