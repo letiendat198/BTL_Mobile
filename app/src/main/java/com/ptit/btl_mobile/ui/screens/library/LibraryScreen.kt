@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,13 +27,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.ptit.btl_mobile.R
-import com.ptit.btl_mobile.ui.components.Option
+import com.ptit.btl_mobile.util.SongOption
 import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.library.tabs.AlbumsTab
@@ -49,8 +47,9 @@ enum class LibraryTabs(val index: Int, val title: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
-    navController: NavController = rememberNavController(),
-    onSetTopAppBar: (TopAppBarContent) -> Unit = {}
+    onSetTopAppBar: (TopAppBarContent) -> Unit = {},
+    onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit,
+    onNavToArtistDetail: (artist: ArtistWithInfo) -> Unit
 ) {
     // Using MainActivity store owner allow view model
     // to be maintained even after user navigated away
@@ -97,11 +96,11 @@ fun LibraryScreen(
         when(selectedTab) {
             0 -> LibrarySongTab(viewModel)
             1 -> AlbumsTab(
-                navController = navController,
+                onNavToAlbumDetail = onNavToAlbumDetail,
                 viewModel = viewModel
             )
             2 -> ArtistsTab(
-                navController = navController,
+                onNavToArtistDetail = onNavToArtistDetail,
                 viewModel = viewModel
             )
         }
@@ -115,7 +114,7 @@ fun LibrarySongTab(viewModel: LibraryViewModel) {
     viewModel.listState = viewModel.listState ?: rememberLazyListState()
 
     val entryOptions = listOf(
-        Option(
+        SongOption(
             title = "Delete song from device"
         )
     )

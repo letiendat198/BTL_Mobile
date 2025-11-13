@@ -8,6 +8,7 @@
 ```
 
 - APP SỬ DỤNG TIẾNG ANH
+- KHÔNG PASS NAVCONTROLLER VÀO COMPOSABLE!!!
 - Không nên tạo Activity cho mỗi giao diện, chỉ cần hàm Composable là được
 - Giao diện lớn để trong thư mục `ui/screens`, component tái sử dụng được để trong `ui/components`
 - Logic xử lý để trong thư mục `model/...`

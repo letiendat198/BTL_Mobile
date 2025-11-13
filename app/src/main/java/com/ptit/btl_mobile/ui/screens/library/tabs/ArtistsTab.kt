@@ -9,10 +9,11 @@ import androidx.navigation.NavController
 import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 import com.ptit.btl_mobile.ui.screens.library.components.ArtistItem
 import com.ptit.btl_mobile.ui.components.EmptyState
+import com.ptit.btl_mobile.ui.screens.library.ArtistWithInfo
 
 @Composable
 fun ArtistsTab(
-    navController: NavController,
+    onNavToArtistDetail: (artist: ArtistWithInfo) -> Unit,
     viewModel: LibraryViewModel
 ) {
     val artists = viewModel.artistsWithInfo
@@ -29,7 +30,7 @@ fun ArtistsTab(
                 ArtistItem(
                     artistInfo = artistInfo,
                     onClick = {
-                        navController.navigate("library/artist/${artistInfo.artist.artistId}")
+                        onNavToArtistDetail(artistInfo)
                     }
                 )
             }

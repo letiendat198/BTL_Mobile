@@ -117,7 +117,7 @@ fun AppNavHost(
             val albumId = backStackEntry.arguments?.getLong("albumId") ?: 0L
             AlbumDetailScreen(
                 albumId = albumId,
-                navController = navController
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -128,13 +128,21 @@ fun AppNavHost(
             val artistId = backStackEntry.arguments?.getLong("artistId") ?: 0L
             ArtistDetailScreen(
                 artistId = artistId,
-                navController = navController
+                onBack = { navController.popBackStack() },
+                onNavToAlbumDetail = { albumInfo ->
+                    navController.navigate("library/album/${albumInfo.album.albumId}")
+                }
             )
         }
 
         composable<Destinations.LibraryScreen> {
             LibraryScreen(
-                navController = navController,
+                onNavToAlbumDetail = { albumInfo ->
+                    navController.navigate("library/album/${albumInfo.album.albumId}")
+                },
+                onNavToArtistDetail = { artistInfo ->
+                    navController.navigate("library/artist/${artistInfo.artist.artistId}")
+                },
                 onSetTopAppBar = onSetTopAppBar
             )
         }

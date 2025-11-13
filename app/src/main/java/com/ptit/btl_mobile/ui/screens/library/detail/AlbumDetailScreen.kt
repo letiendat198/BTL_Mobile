@@ -24,7 +24,7 @@ import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 @Composable
 fun AlbumDetailScreen(
     albumId: Long,
-    navController: NavController
+    onBack: () -> Unit
 ) {
     val viewModel: LibraryViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -45,7 +45,7 @@ fun AlbumDetailScreen(
             TopAppBar(
                 title = { Text(album?.name ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { onBack() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }

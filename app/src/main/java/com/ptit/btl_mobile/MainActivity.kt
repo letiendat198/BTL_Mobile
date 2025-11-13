@@ -57,7 +57,6 @@ import com.ptit.btl_mobile.model.lyrics.LyricsManager
 import com.ptit.btl_mobile.model.media.MediaLoader
 import com.ptit.btl_mobile.model.media.PlaybackService
 import com.ptit.btl_mobile.ui.components.FloatingPlayer
-import com.ptit.btl_mobile.ui.components.OptionMenu
 import com.ptit.btl_mobile.ui.components.SharedTopBar
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.player.PlayerScreen
@@ -122,7 +121,6 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AppNavLayout() {
-    val mainViewModel: MainViewModel = viewModel()
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     var showPlayer by remember { mutableStateOf(false) }
@@ -199,7 +197,6 @@ fun AppNavLayout() {
                         )
                     }
                 }
-//                if (mainViewModel.showMenu) OptionMenu(mainViewModel.menuOptions)
             }
         }
     }
