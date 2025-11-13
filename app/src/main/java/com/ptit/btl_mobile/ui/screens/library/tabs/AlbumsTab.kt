@@ -9,10 +9,11 @@ import androidx.navigation.NavController
 import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 import com.ptit.btl_mobile.ui.screens.library.components.AlbumCard
 import com.ptit.btl_mobile.ui.components.EmptyState
+import com.ptit.btl_mobile.ui.screens.library.AlbumWithInfo
 
 @Composable
 fun AlbumsTab(
-    navController: NavController,
+    onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit,
     viewModel: LibraryViewModel
 ) {
     val albums = viewModel.albumsWithInfo
@@ -32,7 +33,7 @@ fun AlbumsTab(
                 AlbumCard(
                     albumInfo = albumInfo,
                     onClick = {
-                        navController.navigate("library/album/${albumInfo.album.albumId}")
+                        onNavToAlbumDetail(albumInfo)
                     }
                 )
             }

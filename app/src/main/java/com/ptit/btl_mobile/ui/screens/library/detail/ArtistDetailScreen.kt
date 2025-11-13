@@ -18,13 +18,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
+import com.ptit.btl_mobile.ui.screens.library.AlbumWithInfo
 import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArtistDetailScreen(
     artistId: Long,
-    navController: NavController
+    onBack: () -> Unit,
+    onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit
 ) {
     val viewModel: LibraryViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -47,7 +49,7 @@ fun ArtistDetailScreen(
             TopAppBar(
                 title = { Text(artist?.name ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
+                    IconButton(onClick = { onBack() }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 }
@@ -120,7 +122,7 @@ fun ArtistDetailScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        navController.navigate("library/album/${albumInfo.album.albumId}")
+                                        onNavToAlbumDetail(albumInfo)
                                     }
                                     .padding(16.dp),
                                 verticalAlignment = Alignment.CenterVertically
