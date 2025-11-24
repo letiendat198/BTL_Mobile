@@ -132,7 +132,7 @@ fun PlayerScreen(
                                         ) {
                                             // Song Info (Marquee)
                                             Text(
-                                                "Suggested Songs",
+                                                song.song.name,
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
