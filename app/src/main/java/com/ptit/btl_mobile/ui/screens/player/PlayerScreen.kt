@@ -6,19 +6,25 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,17 +47,16 @@ fun PlayerScreen(
     val currentSong by viewModel.currentSong
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
-    // Lấy danh sách gợi ý từ ViewModel
     val recommendedSongs = viewModel.recommendedSongs
 
     BackHandler { onBack() }
 
     currentSong?.let { song ->
         with(sharedTransitionScope) {
-            Scaffold {
+            Scaffold { paddingValues ->
                 Column(
                     modifier = Modifier
-                        .padding(it)
+                        .padding(paddingValues)
                         .padding(horizontal = 25.dp)
                         .draggable(
                             orientation = Orientation.Vertical,
@@ -62,6 +67,7 @@ fun PlayerScreen(
                             }
                         )
                 ) {
+                    // --- MAIN CONTENT AREA (QUEUE / PLAYER + RECOMMENDATIONS) ---
                     AnimatedContent(
                         targetState = viewModel.showQueue,
                         label = "Queue/Recommendation Animation",
@@ -72,20 +78,29 @@ fun PlayerScreen(
                         if (shouldShowQueue) {
                             PlayerQueue(viewModel)
                         } else {
-                            Column {
-                                // 1. Ảnh bìa
+                            // Animation for image weight scaling
+                            // If recommendations are shown -> image takes 45%, else 100%
+                            val imageWeight by animateFloatAsState(
+                                targetValue = if (viewModel.showRecommendations) 0.45f else 1f,
+                                animationSpec = tween(durationMillis = 400),
+                                label = "ImageResizeAnimation"
+                            )
+
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                // 1. COVER IMAGE (THUMBNAIL)
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier
-                                        .weight(0.4f) // Giảm trọng số
+                                        .weight(imageWeight)
                                         .fillMaxWidth()
-                                        .padding(vertical = 16.dp)
+                                        .padding(vertical = if (viewModel.showRecommendations) 16.dp else 32.dp)
                                 ) {
                                     ThumbnailImage(
                                         song.song.imageUri,
                                         modifier = Modifier
                                             .aspectRatio(1f)
                                             .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
                                             .sharedElement(
                                                 rememberSharedContentState(key = "image"),
                                                 animatedVisibilityScope = animatedContentScope
@@ -93,45 +108,77 @@ fun PlayerScreen(
                                     )
                                 }
 
-                                // 2. Tên bài hát và nghệ sĩ
-                                Text(
-                                    song.song.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.SemiBold,
-                                    maxLines = 1,
-                                    modifier = Modifier.basicMarquee()
-                                )
-                                Text(
-                                    song.artists.joinToString(", ") { artist -> artist.name },
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    maxLines = 1,
-                                    modifier = Modifier.basicMarquee()
-                                )
-                                Spacer(Modifier.height(8.dp))
+                                // 2. RECOMMENDATION LIST (Inside a styled Surface)
+                                // Only visible when viewModel.showRecommendations is true
 
-                                Box(modifier = Modifier.weight(0.6f)) {
-                                    SongList(
-                                        songs = recommendedSongs,
-                                        header = {
+                                // CRITICAL FIX: Ensure weight is never exactly 0 to prevent crash
+                                val listWeight = (1f - imageWeight).coerceAtLeast(0.001f)
+
+                                AnimatedVisibility(
+                                    visible = viewModel.showRecommendations,
+                                    modifier = Modifier.weight(listWeight)
+                                ) {
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(bottom = 8.dp)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .padding(16.dp)
+                                                .fillMaxSize()
+                                        ) {
+                                            // Song Info (Marquee)
                                             Text(
-                                                "Suggested Songs",
+                                                song.song.name,
                                                 style = MaterialTheme.typography.titleMedium,
-                                                modifier = Modifier.padding(vertical = 8.dp)
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1,
+                                                modifier = Modifier.basicMarquee()
                                             )
-                                        },
-                                        onClick = { clickedSong ->
-                                            val index = recommendedSongs.indexOf(clickedSong)
-                                            if (index != -1) {
-                                                viewModel.playSong(index, recommendedSongs)
+                                            Text(
+                                                song.artists.joinToString(", ") { artist -> artist.name },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                modifier = Modifier.basicMarquee()
+                                            )
+
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(vertical = 12.dp),
+                                                color = MaterialTheme.colorScheme.outlineVariant
+                                            )
+
+                                            // Recommendation List
+                                            Box(modifier = Modifier.weight(1f)) {
+                                                SongList(
+                                                    songs = recommendedSongs,
+                                                    header = {
+                                                        Text(
+                                                            "Recommended for you", // Changed to English
+                                                            style = MaterialTheme.typography.labelLarge,
+                                                            color = MaterialTheme.colorScheme.primary,
+                                                            modifier = Modifier.padding(bottom = 8.dp)
+                                                        )
+                                                    },
+                                                    onClick = { clickedSong ->
+                                                        val index = recommendedSongs.indexOf(clickedSong)
+                                                        if (index != -1) {
+                                                            viewModel.playSong(index, recommendedSongs)
+                                                        }
+                                                    }
+                                                )
                                             }
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Thanh điều khiển phát nhạc ( giữ nguyên )
+                    // --- CONTROLS AREA (SLIDER, BUTTONS) ---
                     Column(
                         verticalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.padding(vertical = 16.dp)
@@ -168,7 +215,7 @@ fun PlayerScreen(
             }
         }
     } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Chưa có bài hát nào được chọn")
+        Text("No song selected") // Changed to English
     }
 }
 
@@ -180,19 +227,36 @@ fun FunctionRow(
     val currentSong by viewModel.currentSong
 
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceAround,
         modifier = Modifier.fillMaxWidth()
     ) {
+        // Lyrics Button
         IconButton(onClick = {
             currentSong?.let { onNavigateToLyrics(it.song.songId, it.song.name) }
         }) {
-            Icon(painter = painterResource(R.drawable.lyrics), contentDescription = "Lyrics", modifier = Modifier.size(30.dp))
+            Icon(
+                painter = painterResource(R.drawable.lyrics),
+                contentDescription = "Lyrics",
+                modifier = Modifier.size(30.dp)
+            )
         }
+
+        // Toggle Recommendations Button (Star)
+        IconButton(onClick = { viewModel.showRecommendations = !viewModel.showRecommendations }) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Toggle Recommendations",
+                modifier = Modifier.size(30.dp),
+                tint = if (viewModel.showRecommendations) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        // Toggle Queue Button
         IconButton(onClick = { viewModel.showQueue = !viewModel.showQueue }) {
             if (viewModel.showQueue) {
                 Icon(
                     imageVector = Icons.Default.Menu,
-                    contentDescription = "Show Recommendations",
+                    contentDescription = "Show Player",
                     modifier = Modifier.size(30.dp)
                 )
             } else {

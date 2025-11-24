@@ -32,6 +32,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var collectPositionJob: Job? = null
 
     var showQueue by mutableStateOf(false)
+    var showRecommendations by mutableStateOf(true) // State để ẩn/hiện gợi ý
 
     // --- TÍCH HỢP AI GỢI Ý ---
     private val recommendationEngine = RecommendationEngine(application.applicationContext)
