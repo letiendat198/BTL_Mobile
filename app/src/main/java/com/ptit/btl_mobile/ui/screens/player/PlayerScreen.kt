@@ -114,7 +114,7 @@ fun PlayerScreen(
                                         songs = recommendedSongs,
                                         header = {
                                             Text(
-                                                "Gợi ý cho bạn",
+                                                "Suggested Songs",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 modifier = Modifier.padding(vertical = 8.dp)
                                             )
