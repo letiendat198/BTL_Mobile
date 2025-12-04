@@ -86,7 +86,6 @@ fun PlayerScreen(
                             }
                         )
                 ) {
-                    // --- MAIN CONTENT AREA (QUEUE / PLAYER + RECOMMENDATIONS) ---
                     AnimatedContent(
                         viewModel.showAltComponent,
                         modifier = Modifier
@@ -106,7 +105,6 @@ fun PlayerScreen(
                                             // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
                                             .aspectRatio(1f)
                                             .fillMaxSize()
-                                            .clip(RoundedCornerShape(16.dp))
                                             .sharedElement(
                                                 rememberSharedContentState(key = "image"),
                                                 animatedVisibilityScope = animatedContentScope
