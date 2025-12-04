@@ -14,15 +14,19 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import com.ptit.btl_mobile.model.ai.RecommendationEngine
 import com.ptit.btl_mobile.model.database.Database
-import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongWithArtists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+enum class AltComponent {
+    QUEUE,
+    SUGGEST,
+    LYRIC,
+    NONE
+}
 
     // Keep these variables as MutableState.
     // DON'T USE "BY" OR COMPOSE WON'T UPDATE CORRECTLY AS IT WILL SEE IT AS JUST A NORMAL VALUE
@@ -34,7 +38,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var currentPosition = mutableLongStateOf(0) // Playback position in seconds
     var collectPositionJob: Job? = null
 
-    var showQueue by mutableStateOf(false)
+    var showAltComponent by mutableStateOf(false)
+    var currentAltComponent by mutableStateOf<AltComponent>(AltComponent.NONE)
 
     // --- TÍCH HỢP AI GỢI Ý ---
     private val recommendationEngine = RecommendationEngine(application.applicationContext)
@@ -57,6 +62,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var mediaController: MediaController? = null
         set(value) {
             if (value!=null) {
+                field = value
                 value.addListener(MediaControlCallback())
             }
         }

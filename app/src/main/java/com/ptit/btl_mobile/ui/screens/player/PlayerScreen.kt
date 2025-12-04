@@ -1,7 +1,6 @@
 package com.ptit.btl_mobile.ui.screens.player
 
 import android.text.format.DateUtils
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -9,7 +8,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -19,46 +17,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.ui.components.PlaybackControl
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
-import com.ptit.btl_mobile.ui.theme.BTL_MobileTheme
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -81,110 +67,108 @@ fun PlayerScreen(
     currentSong?.let { song ->
         with(sharedTransitionScope) {
             Scaffold { innerPadding ->
-                MaterialTheme (
-//                    colorScheme = darkColorScheme()
-                ) {
-//                    ThumbnailImage(
-//                        imageUri = song.song.imageUri,
-//                        contentScale = ContentScale.FillBounds,
-//                        modifier = Modifier.fillMaxSize().blur(100.dp)
-//                    )
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .padding(25.dp, 10.dp)
-                            .draggable(
-                                orientation = Orientation.Vertical,
-                                state = rememberDraggableState { delta -> dragOffset += delta },
-                                onDragStopped = {
-                                    if (dragOffset > 0) { // Up is +
-                                        onBack()
-                                    }
-                                    dragOffset = 0f; // Reset
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .padding(25.dp, 10.dp)
+                        .draggable(
+                            orientation = Orientation.Vertical,
+                            state = rememberDraggableState { delta -> dragOffset += delta },
+                            onDragStopped = {
+                                if (dragOffset > 0) { // Up is +
+                                    onBack()
                                 }
-                            )
-                    ) {
-                        AnimatedContent(
-                            viewModel.showQueue,
-                            modifier = Modifier.weight(1f).fillMaxWidth()
-                        ) { shouldShowQueue ->
-                            if (!shouldShowQueue) {
-                                Column {
-                                    Box(contentAlignment = Alignment.Center,
+                                dragOffset = 0f; // Reset
+                            }
+                        )
+                ) {
+                    AnimatedContent(
+                        viewModel.showAltComponent,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) { shouldShowList ->
+                        if (!shouldShowList) {
+                            Column {
+                                Box(contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1F)
+                                        .fillMaxWidth()) {
+                                    ThumbnailImage(
+                                        song.song.imageUri,
                                         modifier = Modifier
-                                            .weight(1F)
-                                            .fillMaxWidth()) {
-                                        ThumbnailImage(
-                                            song.song.imageUri,
-                                            modifier = Modifier
-                                                // Basically tell the image CONTAINER that it should only use height and width of 1:1 the image
-                                                // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
-                                                .aspectRatio(1f)
-                                                .fillMaxSize()
-                                                .sharedElement(
-                                                    rememberSharedContentState(key = "image"),
-                                                    animatedVisibilityScope = animatedContentScope
-                                                )
+                                            // Basically tell the image CONTAINER that it should only use height and width of 1:1 the image
+                                            // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
+                                            .aspectRatio(1f)
+                                            .fillMaxSize()
+                                            .sharedElement(
+                                                rememberSharedContentState(key = "image"),
+                                                animatedVisibilityScope = animatedContentScope
+                                            )
+                                    )
+                                }
+                                Row (
+                                    modifier = Modifier.padding(0.dp, 10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Text(
+                                            song.song.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 25.sp,
+                                            modifier = Modifier.basicMarquee()
+                                        )
+                                        Text(
+                                            song.artists.joinToString(", ") {it.name},
+                                            modifier = Modifier.basicMarquee()
                                         )
                                     }
-                                    Row (
-                                        modifier = Modifier.padding(0.dp, 10.dp)
-                                    ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                            Text(
-                                                song.song.name,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 25.sp,
-                                                modifier = Modifier.basicMarquee()
-                                            )
-                                            Text(
-                                                song.artists.joinToString(", ") {it.name},
-                                                modifier = Modifier.basicMarquee()
-                                            )
-                                        }
-                                    }
                                 }
-                            }
-                            else {
-                                PlayerQueue(viewModel)
                             }
                         }
-                        Column(verticalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier
-                                .weight(0.7f)
-                                .fillMaxWidth()
-                        ) {
-                            Column {
-                                Slider(
-                                    value = seekPosition.toFloat(),
-                                    onValueChange = {seekPosition = it.toLong()},
-                                    onValueChangeFinished = {
-                                        viewModel.mediaController?.seekTo(seekPosition * 1000) // Second to MS
-                                    },
-                                    valueRange = 0f..(song.song.duration / 1000).toFloat()
-                                )
-                                Row(horizontalArrangement = Arrangement.SpaceBetween,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                ) {
-                                    Text(DateUtils.formatElapsedTime(seekPosition))
-                                    Text(DateUtils.formatElapsedTime(song.song.duration / 1000))
-                                }
+                        else {
+                            when (viewModel.currentAltComponent) {
+                                AltComponent.QUEUE ->  PlayerQueue(viewModel)
+                                AltComponent.SUGGEST -> RecommendationList(viewModel)
+                                AltComponent.LYRIC -> TODO()
+                                AltComponent.NONE -> TODO()
                             }
-
-                            PlaybackControl(
-                                viewModel,
-                                controlSize = 60.dp,
+                        }
+                    }
+                    Column(verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .weight(0.7f)
+                            .fillMaxWidth()
+                    ) {
+                        Column {
+                            Slider(
+                                value = seekPosition.toFloat(),
+                                onValueChange = {seekPosition = it.toLong()},
+                                onValueChangeFinished = {
+                                    viewModel.mediaController?.seekTo(seekPosition * 1000) // Second to MS
+                                },
+                                valueRange = 0f..(song.song.duration / 1000).toFloat()
+                            )
+                            Row(horizontalArrangement = Arrangement.SpaceBetween,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .sharedElement(
-                                        rememberSharedContentState(key = "control"),
-                                        animatedVisibilityScope = animatedContentScope
-                                    )
-                            )
-
-                            FunctionRow(viewModel, onNavigateToLyrics)
+                            ) {
+                                Text(DateUtils.formatElapsedTime(seekPosition))
+                                Text(DateUtils.formatElapsedTime(song.song.duration / 1000))
+                            }
                         }
+
+                        PlaybackControl(
+                            viewModel,
+                            controlSize = 60.dp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .sharedElement(
+                                    rememberSharedContentState(key = "control"),
+                                    animatedVisibilityScope = animatedContentScope
+                                )
+                        )
+
+                        FunctionRow(viewModel, onNavigateToLyrics)
                     }
                 }
             }
@@ -213,9 +197,30 @@ fun FunctionRow(
                 modifier = Modifier.size(30.dp)
             )
         }
+        // Toggle Recommendations Button (Star)
         IconButton(
             onClick = {
-                viewModel.showQueue = !viewModel.showQueue
+                if (viewModel.currentAltComponent == AltComponent.SUGGEST) viewModel.showAltComponent = !viewModel.showAltComponent
+                else {
+                    viewModel.currentAltComponent = AltComponent.SUGGEST
+                    viewModel.showAltComponent = true
+                }
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = "Toggle Recommendations",
+                modifier = Modifier.size(30.dp),
+                tint = if (viewModel.currentAltComponent == AltComponent.SUGGEST && viewModel.showAltComponent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+            )
+        }
+        IconButton(
+            onClick = {
+                if (viewModel.currentAltComponent == AltComponent.QUEUE) viewModel.showAltComponent = !viewModel.showAltComponent
+                else {
+                    viewModel.currentAltComponent = AltComponent.QUEUE
+                    viewModel.showAltComponent = true
+                }
             }
         ) {
             Icon(painter = painterResource(R.drawable.queue_music),
