@@ -92,15 +92,20 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
                     if (isMusic == 0) continue
 
                     var songWithArtists = readFromStoreToSong(cursor)
-                    val albumWithArtists = readFromStoreToAlbum(cursor)
+                    var albumWithArtists = readFromStoreToAlbum(cursor)
 
                     // If there's album info
                     if (albumWithArtists != null) {
+                        // Set album image as its first song
+                        albumWithArtists = albumWithArtists.copy(
+                            album = albumWithArtists.album.copy(imageUri = songWithArtists.song.imageUri)
+                        )
                         // Add album and album artists to db
                         val albumId = db.AlbumDAO().safeInsertAlbum(albumWithArtists.album)
                         albumWithArtists.artists.forEach { artist ->
+                            val artistWithImage = artist.copy(imageUri = songWithArtists.song.imageUri)
                             // Using non-safe insert won't return duplicated artist id
-                            val artistId = db.ArtistDAO().safeInsertArtist(artist)
+                            val artistId = db.ArtistDAO().safeInsertArtist(artistWithImage)
                             db.AlbumDAO().insertAlbumWithArtists(AlbumArtistCrossRef(artistId, albumId))
                         }
 
@@ -164,6 +169,7 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
             artists.forEach { i ->
                 val artist = Artist(
                     name = artistName,
+                    imageUri = imageUri?.toString() // Artist share same image as their first song
                 )
                 listArtists.add(artist)
             }

@@ -9,7 +9,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ptit.btl_mobile.model.database.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 // Wrapper classes trong ViewModel
 data class AlbumWithInfo(
@@ -27,7 +30,7 @@ data class ArtistWithInfo(
 class LibraryViewModel: ViewModel() {
     // ===== CODE CŨ - GIỮ NGUYÊN =====
     private var _songs = listOf<SongWithArtists>()
-    var songs by mutableStateOf(_songs)
+    var songs = mutableStateOf(_songs)
     var searchQuery = mutableStateOf("")
     var selectedTab = mutableIntStateOf(0);
     var listState: LazyListState? = null
@@ -77,9 +80,11 @@ class LibraryViewModel: ViewModel() {
 
     fun getAllSongs() {
         val db = Database.getInstance()
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _songs = db.SongDAO().getAllWithArtists()
-            songs = _songs
+            withContext(Dispatchers.Main) {
+                songs.value = _songs
+            }
         }
     }
 
@@ -166,16 +171,16 @@ class LibraryViewModel: ViewModel() {
 
     fun filterSongName(query: String) {
         if (query.isEmpty()) {
-            songs = _songs
+            songs.value = _songs
             return
         }
 
-        songs = _songs.filter { (song, artists) ->
+        songs.value = _songs.filter { (song, artists) ->
             song.name.contains(query, true) ||
                     artists.any {artist -> artist.name.contains(query, true)} }
     }
 
     fun sortSong() {
-        songs = _songs.sortedBy { (song, artists) -> song.name }
+        songs.value = _songs.sortedBy { (song, artists) -> song.name }
     }
 }

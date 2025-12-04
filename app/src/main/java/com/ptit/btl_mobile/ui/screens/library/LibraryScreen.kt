@@ -19,8 +19,11 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +40,11 @@ import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.library.tabs.AlbumsTab
 import com.ptit.btl_mobile.ui.screens.library.tabs.ArtistsTab
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 enum class LibraryTabs(val index: Int, val title: String) {
     SONG(0, "Songs"),
@@ -56,9 +64,10 @@ fun LibraryScreen(
     val viewModel: LibraryViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
-    Log.d("LIBRARY_SCREEN", "Recomposed when song list size is: " + viewModel.songs.size)
+    Log.d("LIBRARY_SCREEN", "Recomposed when song list size is: " + viewModel.songs.value.size)
 
     var selectedTab by viewModel.selectedTab
+    var isRefreshing by remember { mutableStateOf(false) }
 
     onSetTopAppBar(TopAppBarContent(
         title = "Library",
@@ -93,16 +102,33 @@ fun LibraryScreen(
             }
         }
 
-        when(selectedTab) {
-            0 -> LibrarySongTab(viewModel)
-            1 -> AlbumsTab(
-                onNavToAlbumDetail = onNavToAlbumDetail,
-                viewModel = viewModel
-            )
-            2 -> ArtistsTab(
-                onNavToArtistDetail = onNavToArtistDetail,
-                viewModel = viewModel
-            )
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                isRefreshing = true
+                when(selectedTab) {
+                    0 -> viewModel.getAllSongs()
+                    1 -> viewModel.getAllAlbums()
+                    2 -> viewModel.getAllArtists()
+                }
+                val scope = CoroutineScope(Dispatchers.Main)
+                scope.launch {
+                    delay(500L)
+                    isRefreshing = false
+                }
+            }
+        ) {
+            when(selectedTab) {
+                0 -> LibrarySongTab(viewModel)
+                1 -> AlbumsTab(
+                    onNavToAlbumDetail = onNavToAlbumDetail,
+                    viewModel = viewModel
+                )
+                2 -> ArtistsTab(
+                    onNavToArtistDetail = onNavToArtistDetail,
+                    viewModel = viewModel
+                )
+            }
         }
     }
 }
@@ -166,7 +192,7 @@ fun LibrarySongTab(viewModel: LibraryViewModel) {
         )
 
         SongList(
-            songs = viewModel.songs,
+            songs = viewModel.songs.value,
             customState = viewModel.listState,
             entryOptions = entryOptions
         )
