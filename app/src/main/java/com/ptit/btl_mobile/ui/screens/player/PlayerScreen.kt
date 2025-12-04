@@ -6,8 +6,11 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -37,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,6 +86,7 @@ fun PlayerScreen(
                             }
                         )
                 ) {
+                    // --- MAIN CONTENT AREA (QUEUE / PLAYER + RECOMMENDATIONS) ---
                     AnimatedContent(
                         viewModel.showAltComponent,
                         modifier = Modifier
@@ -101,6 +106,7 @@ fun PlayerScreen(
                                             // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
                                             .aspectRatio(1f)
                                             .fillMaxSize()
+                                            .clip(RoundedCornerShape(16.dp))
                                             .sharedElement(
                                                 rememberSharedContentState(key = "image"),
                                                 animatedVisibilityScope = animatedContentScope
