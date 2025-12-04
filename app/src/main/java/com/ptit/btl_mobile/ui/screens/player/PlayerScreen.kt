@@ -15,23 +15,39 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.ui.components.PlaybackControl
-import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -42,62 +58,52 @@ fun PlayerScreen(
     onBack: () -> Unit,
     onNavigateToLyrics: (Long, String) -> Unit
 ) {
-    val viewModel: PlayerViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+    val viewModel = viewModel<PlayerViewModel>(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+    // DO NOT REMEMBER STUFFS FROM VIEWMODEL
     var seekPosition by viewModel.currentPosition
     val currentSong by viewModel.currentSong
     var dragOffset by remember { mutableFloatStateOf(0f) }
 
-    val recommendedSongs = viewModel.recommendedSongs
-
-    BackHandler { onBack() }
+    BackHandler {
+        onBack()
+    }
 
     currentSong?.let { song ->
         with(sharedTransitionScope) {
-            Scaffold { paddingValues ->
+            Scaffold { innerPadding ->
                 Column(
                     modifier = Modifier
-                        .padding(paddingValues)
-                        .padding(horizontal = 25.dp)
+                        .padding(innerPadding)
+                        .padding(25.dp, 10.dp)
                         .draggable(
                             orientation = Orientation.Vertical,
                             state = rememberDraggableState { delta -> dragOffset += delta },
                             onDragStopped = {
-                                if (dragOffset > 0) onBack()
-                                dragOffset = 0f
+                                if (dragOffset > 0) { // Up is +
+                                    onBack()
+                                }
+                                dragOffset = 0f; // Reset
                             }
                         )
                 ) {
                     // --- MAIN CONTENT AREA (QUEUE / PLAYER + RECOMMENDATIONS) ---
                     AnimatedContent(
-                        targetState = viewModel.showQueue,
-                        label = "Queue/Recommendation Animation",
+                        viewModel.showAltComponent,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                    ) { shouldShowQueue ->
-                        if (shouldShowQueue) {
-                            PlayerQueue(viewModel)
-                        } else {
-                            // Animation for image weight scaling
-                            // If recommendations are shown -> image takes 45%, else 100%
-                            val imageWeight by animateFloatAsState(
-                                targetValue = if (viewModel.showRecommendations) 0.45f else 1f,
-                                animationSpec = tween(durationMillis = 400),
-                                label = "ImageResizeAnimation"
-                            )
-
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                // 1. COVER IMAGE (THUMBNAIL)
-                                Box(
-                                    contentAlignment = Alignment.Center,
+                    ) { shouldShowList ->
+                        if (!shouldShowList) {
+                            Column {
+                                Box(contentAlignment = Alignment.Center,
                                     modifier = Modifier
-                                        .weight(imageWeight)
-                                        .fillMaxWidth()
-                                        .padding(vertical = if (viewModel.showRecommendations) 16.dp else 32.dp)
-                                ) {
+                                        .weight(1F)
+                                        .fillMaxWidth()) {
                                     ThumbnailImage(
                                         song.song.imageUri,
                                         modifier = Modifier
+                                            // Basically tell the image CONTAINER that it should only use height and width of 1:1 the image
+                                            // So that when apply fillMaxSize, it doesn't use all the available space and hide rounded corners
                                             .aspectRatio(1f)
                                             .fillMaxSize()
                                             .clip(RoundedCornerShape(16.dp))
@@ -107,92 +113,50 @@ fun PlayerScreen(
                                             )
                                     )
                                 }
-
-                                // 2. RECOMMENDATION LIST (Inside a styled Surface)
-                                // Only visible when viewModel.showRecommendations is true
-
-                                // CRITICAL FIX: Ensure weight is never exactly 0 to prevent crash
-                                val listWeight = (1f - imageWeight).coerceAtLeast(0.001f)
-
-                                AnimatedVisibility(
-                                    visible = viewModel.showRecommendations,
-                                    modifier = Modifier.weight(listWeight)
+                                Row (
+                                    modifier = Modifier.padding(0.dp, 10.dp)
                                 ) {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
-                                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(bottom = 8.dp)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .padding(16.dp)
-                                                .fillMaxSize()
-                                        ) {
-                                            // Song Info (Marquee)
-                                            Text(
-                                                song.song.name,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                maxLines = 1,
-                                                modifier = Modifier.basicMarquee()
-                                            )
-                                            Text(
-                                                song.artists.joinToString(", ") { artist -> artist.name },
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                modifier = Modifier.basicMarquee()
-                                            )
-
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(vertical = 12.dp),
-                                                color = MaterialTheme.colorScheme.outlineVariant
-                                            )
-
-                                            // Recommendation List
-                                            Box(modifier = Modifier.weight(1f)) {
-                                                SongList(
-                                                    songs = recommendedSongs,
-                                                    header = {
-                                                        Text(
-                                                            "Recommended for you", // Changed to English
-                                                            style = MaterialTheme.typography.labelLarge,
-                                                            color = MaterialTheme.colorScheme.primary,
-                                                            modifier = Modifier.padding(bottom = 8.dp)
-                                                        )
-                                                    },
-                                                    onClick = { clickedSong ->
-                                                        val index = recommendedSongs.indexOf(clickedSong)
-                                                        if (index != -1) {
-                                                            viewModel.playSong(index, recommendedSongs)
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                        }
+                                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Text(
+                                            song.song.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 25.sp,
+                                            modifier = Modifier.basicMarquee()
+                                        )
+                                        Text(
+                                            song.artists.joinToString(", ") {it.name},
+                                            modifier = Modifier.basicMarquee()
+                                        )
                                     }
                                 }
                             }
                         }
+                        else {
+                            when (viewModel.currentAltComponent) {
+                                AltComponent.QUEUE ->  PlayerQueue(viewModel)
+                                AltComponent.SUGGEST -> RecommendationList(viewModel)
+                                AltComponent.LYRIC -> TODO()
+                                AltComponent.NONE -> TODO()
+                            }
+                        }
                     }
-
-                    // --- CONTROLS AREA (SLIDER, BUTTONS) ---
-                    Column(
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.padding(vertical = 16.dp)
+                    Column(verticalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .weight(0.7f)
+                            .fillMaxWidth()
                     ) {
                         Column {
                             Slider(
                                 value = seekPosition.toFloat(),
-                                onValueChange = { seekPosition = it.toLong() },
-                                onValueChangeFinished = { viewModel.mediaController?.seekTo(seekPosition * 1000) },
+                                onValueChange = {seekPosition = it.toLong()},
+                                onValueChangeFinished = {
+                                    viewModel.mediaController?.seekTo(seekPosition * 1000) // Second to MS
+                                },
                                 valueRange = 0f..(song.song.duration / 1000).toFloat()
                             )
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
+                            Row(horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier
+                                    .fillMaxWidth()
                             ) {
                                 Text(DateUtils.formatElapsedTime(seekPosition))
                                 Text(DateUtils.formatElapsedTime(song.song.duration / 1000))
@@ -209,14 +173,13 @@ fun PlayerScreen(
                                     animatedVisibilityScope = animatedContentScope
                                 )
                         )
+
                         FunctionRow(viewModel, onNavigateToLyrics)
                     }
                 }
             }
         }
-    } ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("No song selected") // Changed to English
-    }
+    } ?: Text("No current song to play. This should not happen")
 }
 
 @Composable
@@ -226,46 +189,50 @@ fun FunctionRow(
 ) {
     val currentSong by viewModel.currentSong
 
-    Row(
-        horizontalArrangement = Arrangement.SpaceAround,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // Lyrics Button
-        IconButton(onClick = {
-            currentSong?.let { onNavigateToLyrics(it.song.songId, it.song.name) }
-        }) {
-            Icon(
-                painter = painterResource(R.drawable.lyrics),
+    Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()) {
+        IconButton(
+            onClick = {
+                currentSong?.let { song ->
+                    onNavigateToLyrics(song.song.songId, song.song.name)
+                }
+            },
+        ) {
+            Icon(painter = painterResource(R.drawable.lyrics),
                 contentDescription = "Lyrics",
                 modifier = Modifier.size(30.dp)
             )
         }
-
         // Toggle Recommendations Button (Star)
-        IconButton(onClick = { viewModel.showRecommendations = !viewModel.showRecommendations }) {
+        IconButton(
+            onClick = {
+                if (viewModel.currentAltComponent == AltComponent.SUGGEST) viewModel.showAltComponent = !viewModel.showAltComponent
+                else {
+                    viewModel.currentAltComponent = AltComponent.SUGGEST
+                    viewModel.showAltComponent = true
+                }
+            }
+        ) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = "Toggle Recommendations",
                 modifier = Modifier.size(30.dp),
-                tint = if (viewModel.showRecommendations) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                tint = if (viewModel.currentAltComponent == AltComponent.SUGGEST && viewModel.showAltComponent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
         }
-
-        // Toggle Queue Button
-        IconButton(onClick = { viewModel.showQueue = !viewModel.showQueue }) {
-            if (viewModel.showQueue) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    contentDescription = "Show Player",
-                    modifier = Modifier.size(30.dp)
-                )
-            } else {
-                Icon(
-                    painter = painterResource(id = R.drawable.queue_music),
-                    contentDescription = "Show Queue",
-                    modifier = Modifier.size(30.dp)
-                )
+        IconButton(
+            onClick = {
+                if (viewModel.currentAltComponent == AltComponent.QUEUE) viewModel.showAltComponent = !viewModel.showAltComponent
+                else {
+                    viewModel.currentAltComponent = AltComponent.QUEUE
+                    viewModel.showAltComponent = true
+                }
             }
+        ) {
+            Icon(painter = painterResource(R.drawable.queue_music),
+                contentDescription = "Queue music",
+                modifier = Modifier.size(30.dp)
+            )
         }
     }
 }

@@ -14,25 +14,32 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import com.ptit.btl_mobile.model.ai.RecommendationEngine
 import com.ptit.btl_mobile.model.database.Database
-import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongWithArtists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+enum class AltComponent {
+    QUEUE,
+    SUGGEST,
+    LYRIC,
+    NONE
+}
+
+    // Keep these variables as MutableState.
+    // DON'T USE "BY" OR COMPOSE WON'T UPDATE CORRECTLY AS IT WILL SEE IT AS JUST A NORMAL VALUE
+    // YOU CAN USE "BY" IN COMPOSE NORMALLY
 class PlayerViewModel(application: Application): AndroidViewModel(application) {
     var currentSong = mutableStateOf<SongWithArtists?>(null)
     private var _currentQueue = listOf<SongWithArtists>()
     val currentQueue = mutableStateOf(_currentQueue)
-    var currentPosition = mutableLongStateOf(0)
+    var currentPosition = mutableLongStateOf(0) // Playback position in seconds
     var collectPositionJob: Job? = null
 
-    var showQueue by mutableStateOf(false)
-    var showRecommendations by mutableStateOf(true) // State để ẩn/hiện gợi ý
+    var showAltComponent by mutableStateOf(false)
+    var currentAltComponent by mutableStateOf<AltComponent>(AltComponent.NONE)
 
     // --- TÍCH HỢP AI GỢI Ý ---
     private val recommendationEngine = RecommendationEngine(application.applicationContext)
@@ -54,9 +61,9 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     var mediaController: MediaController? = null
         set(value) {
-            if (field != value) {
+            if (value!=null) {
                 field = value
-                value?.addListener(MediaControlCallback())
+                value.addListener(MediaControlCallback())
             }
         }
 
@@ -87,31 +94,35 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
             if (oldPosition.mediaItemIndex != newPosition.mediaItemIndex) {
                 currentSongIndex = newPosition.mediaItemIndex
+            // No need to update seekbar from here. Coroutine will update it anyways
             }
         }
 
+        // Fire if song move on naturally or seekTo
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
-            mediaController?.currentMediaItemIndex?.let { currentSongIndex = it }
+
+            // Media controller should never be null at this point
+            currentSongIndex = mediaController?.currentMediaItemIndex!!
         }
     }
 
     fun playSong(index: Int, queue: List<SongWithArtists>) {
         updateCurrentQueue(queue)
-        mediaController?.seekTo(index, 0)
-        if (mediaController?.isPlaying == false) {
-            mediaController?.prepare()
-            mediaController?.play()
-        }
-        // Cập nhật index và bài hát ngay lập tức
         currentSongIndex = index
+        mediaController?.seekTo(index, 0)
+
+        mediaController?.prepare()
+        mediaController?.play()
     }
 
     private fun updateCurrentQueue(queue: List<SongWithArtists>) {
+        // Should only update if song list is different. Only comparing references for speed
         if (queue === _currentQueue) {
             Log.d("PLAYER", "New queue and current queue is the same list ref")
             return
         }
+
         _currentQueue = queue
         currentQueue.value = _currentQueue
 
