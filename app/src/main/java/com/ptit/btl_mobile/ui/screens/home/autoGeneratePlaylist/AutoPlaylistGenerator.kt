@@ -273,7 +273,7 @@ object PlaylistTemplates {
         createTemplate(
             id = "random_25",
             name = "Random 25",
-            description = "25 random songs \n",
+            description = "25 random songs",
             icon = "🎵",
             generator = { AutoPlaylistGenerator.generateRandomMix(it, 25) }
         ),
@@ -282,7 +282,7 @@ object PlaylistTemplates {
         createTemplate(
             id = "recently_added",
             name = "Recently Added",
-            description = "Your newest songs \n",
+            description = "Your newest songs",
             icon = "🆕",
             generator = { AutoPlaylistGenerator.generateRecentlyAdded(it, 25) }
         ),
