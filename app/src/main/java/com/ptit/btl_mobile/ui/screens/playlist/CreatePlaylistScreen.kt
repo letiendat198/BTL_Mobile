@@ -23,10 +23,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
+fun CreatePlaylistScreen(
+    onBack: () -> Unit,
+    onNavToSelectSongs: () -> Unit,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
+) {
     val context = LocalContext.current
     val viewModel = viewModel<PlaylistViewModel>(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -38,6 +43,39 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
     var playlistName by remember { mutableStateOf(draft.name) }
     var imageUri by remember { mutableStateOf<String?>(draft.imageUri) }
     var tempSelectedUri by remember { mutableStateOf<Uri?>(draft.tempImageUri) }
+
+    onSetTopAppBar(TopAppBarContent(
+        title = "Create New Playlist",
+        navigationIcon = {
+            IconButton(onClick = {
+                viewModel.clearDraft()
+                onBack()
+            }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        },
+        actions = {
+            TextButton(
+                onClick = {
+                    val firstSongImage = allSongs
+                        .find { it.song.songId == viewModel.selectedSongIds.firstOrNull() }
+                        ?.song?.imageUri
+
+                    viewModel.saveDraftInfo(
+                        name = playlistName,
+                        imageUri = imageUri ?: firstSongImage,
+                        tempImageUri = tempSelectedUri
+                    )
+
+                    Log.d("CreatePlaylistScreen", "Saved draft - Name: $playlistName, Image: $imageUri")
+                    onNavToSelectSongs()
+                },
+                enabled = playlistName.isNotBlank()
+            ) {
+                Text("Next")
+            }
+        }
+    ))
 
     // ✅ Đồng bộ tên playlist, nhưng KHÔNG reset ảnh
     LaunchedEffect(draft.name) {
@@ -64,128 +102,90 @@ fun CreatePlaylistScreen(onBack: () -> Unit, onNavToSelectSongs: () -> Unit) {
         }
     )
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Create New Playlist") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        viewModel.clearDraft()
-                        onBack()
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    TextButton(
-                        onClick = {
-                            val firstSongImage = allSongs
-                                .find { it.song.songId == viewModel.selectedSongIds.firstOrNull() }
-                                ?.song?.imageUri
-
-                            viewModel.saveDraftInfo(
-                                name = playlistName,
-                                imageUri = imageUri ?: firstSongImage,
-                                tempImageUri = tempSelectedUri
-                            )
-
-                            Log.d("CreatePlaylistScreen", "Saved draft - Name: $playlistName, Image: $imageUri")
-                            onNavToSelectSongs()
-                        },
-                        enabled = playlistName.isNotBlank()
-                    ) {
-                        Text("Next")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
+
+            // ✅ Preview ảnh
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .size(180.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.LightGray)
+                    .clickable { imagePickerLauncher.launch("image/*") },
+                contentAlignment = Alignment.Center
             ) {
+                val firstSongImage = allSongs
+                    .find { it.song.songId == viewModel.selectedSongIds.firstOrNull() }
+                    ?.song?.imageUri
 
-                // ✅ Preview ảnh
-                Box(
-                    modifier = Modifier
-                        .size(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color.LightGray)
-                        .clickable { imagePickerLauncher.launch("image/*") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    val firstSongImage = allSongs
-                        .find { it.song.songId == viewModel.selectedSongIds.firstOrNull() }
-                        ?.song?.imageUri
+                val displayImage = imageUri ?: firstSongImage
 
-                    val displayImage = imageUri ?: firstSongImage
-
-                    if (displayImage != null) {
-                        ThumbnailImage(
-                            imageUri = displayImage,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.AccountCircle,
-                            contentDescription = "Default image",
-                            modifier = Modifier.size(90.dp),
-                            tint = Color.Gray
-                        )
-                    }
+                if (displayImage != null) {
+                    ThumbnailImage(
+                        imageUri = displayImage,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.AccountCircle,
+                        contentDescription = "Default image",
+                        modifier = Modifier.size(90.dp),
+                        tint = Color.Gray
+                    )
                 }
+            }
 
-                Text(
-                    text = "Tap to select image",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
+            Text(
+                text = "Tap to select image",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
 
-                OutlinedTextField(
-                    value = playlistName,
-                    onValueChange = {
-                        playlistName = it
-                        viewModel.updateDraftName(it)
-                    },
-                    label = { Text("Playlist Name") },
+            OutlinedTextField(
+                value = playlistName,
+                onValueChange = {
+                    playlistName = it
+                    viewModel.updateDraftName(it)
+                },
+                label = { Text("Playlist Name") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                placeholder = { Text("Enter playlist name...") }
+            )
+
+            if (draft.selectedSongIds.isNotEmpty()) {
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("Enter playlist name...") }
-                )
-
-                if (draft.selectedSongIds.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        )
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = "${draft.selectedSongIds.size} songs selected",
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
-                                Text(
-                                    text = "You can add more songs in next step",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
+                        Column {
+                            Text(
+                                text = "${draft.selectedSongIds.size} songs selected",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Text(
+                                text = "You can add more songs in next step",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                            )
                         }
                     }
                 }

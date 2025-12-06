@@ -55,7 +55,8 @@ fun AppNavHost(
                 },
                 onNavigateToPlaylistDetail = { _ ->
                     navController.navigate(Destinations.PlaylistDetailScreen)
-                }
+                },
+                onSetTopAppBar
             )
         }
 
@@ -66,7 +67,8 @@ fun AppNavHost(
                 },
                 onNavToPlaylistDetailsScreen = {
                     navController.navigate(Destinations.PlaylistDetailScreen)
-                }
+                },
+                onSetTopAppBar
             )
         }
 
@@ -75,7 +77,8 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onAddSongs = { playlistId ->
                     navController.navigate(Destinations.AddSongsToPlaylist(playlistId))
-                }
+                },
+                onSetTopAppBar
             )
         }
 
@@ -83,7 +86,8 @@ fun AppNavHost(
             val args: Destinations.AddSongsToPlaylist = backStackEntry.toRoute()
             AddSongsToPlaylistScreen(
                 playlistId = args.playlistId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onSetTopAppBar
             )
         }
 
@@ -91,12 +95,14 @@ fun AppNavHost(
             CreatePlaylistScreen(
                 onBack = { navController.popBackStack() },
                 onNavToSelectSongs = { navController.navigate(Destinations.SelectSongsScreen) },
+                onSetTopAppBar
             )
         }
 
         composable<Destinations.SelectSongsScreen> {
             SelectSongsScreen(
-                onBack = { navController.navigate(Destinations.PlaylistScreen) }
+                onBack = { navController.navigate(Destinations.PlaylistScreen) },
+                onSetTopAppBar
             )
         }
 
@@ -106,7 +112,8 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onPlaylistGenerated = {
                     navController.popBackStack()
-                }
+                },
+                onSetTopAppBar
             )
         }
 
@@ -117,7 +124,8 @@ fun AppNavHost(
             val albumId = backStackEntry.arguments?.getLong("albumId") ?: 0L
             AlbumDetailScreen(
                 albumId = albumId,
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onSetTopAppBar
             )
         }
 
@@ -131,7 +139,8 @@ fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onNavToAlbumDetail = { albumInfo ->
                     navController.navigate("library/album/${albumInfo.album.albumId}")
-                }
+                },
+                onSetTopAppBar
             )
         }
 
@@ -160,7 +169,8 @@ fun AppNavHost(
             LyricsScreen(
                 songId = songId,
                 songTitle = songTitle,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSetTopAppBar
             )
         }
     }

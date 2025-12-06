@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.model.lyrics.LrcLine
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import kotlinx.coroutines.launch
 
@@ -32,7 +33,8 @@ import kotlinx.coroutines.launch
 fun LyricsScreen(
     songId: Long,
     songTitle: String,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current as ComponentActivity
@@ -65,97 +67,92 @@ fun LyricsScreen(
         uri?.let { viewModel.importLrcFile(it) }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Lyrics - $songTitle", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                },
-                actions = {
-                    if (lyrics != null && !isEditing) {
-                        IconButton(onClick = {
-                            editText = lyrics ?: ""
-                            viewModel.startEditing()
-                        }) {
-                            Icon(Icons.Default.Edit, "Edit")
-                        }
-                        IconButton(onClick = { viewModel.deleteLyrics() }) {
-                            Icon(Icons.Default.Delete, "Delete")
-                        }
-                    }
+    onSetTopAppBar(TopAppBarContent(
+        title = "Lyrics - $songTitle",
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Default.ArrowBack, "Back")
+            }
+        },
+        actions = {
+            if (lyrics != null && !isEditing) {
+                IconButton(onClick = {
+                    editText = lyrics ?: ""
+                    viewModel.startEditing()
+                }) {
+                    Icon(Icons.Default.Edit, "Edit")
                 }
-            )
+                IconButton(onClick = { viewModel.deleteLyrics() }) {
+                    Icon(Icons.Default.Delete, "Delete")
+                }
+            }
         }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when {
-                isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+    ))
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
+            }
 
-                isEditing -> {
-                    Column(
+            isEditing -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    OutlinedTextField(
+                        value = editText,
+                        onValueChange = { editText = it },
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp)
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        placeholder = { Text("Enter lyrics here...") },
+                        maxLines = Int.MAX_VALUE
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        OutlinedTextField(
-                            value = editText,
-                            onValueChange = { editText = it },
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            placeholder = { Text("Enter lyrics here...") },
-                            maxLines = Int.MAX_VALUE
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        OutlinedButton(
+                            onClick = { viewModel.cancelEditing() },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            OutlinedButton(
-                                onClick = { viewModel.cancelEditing() },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Cancel")
-                            }
-                            Button(
-                                onClick = { viewModel.saveLyrics(editText) },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Save")
-                            }
+                            Text("Cancel")
+                        }
+                        Button(
+                            onClick = { viewModel.saveLyrics(editText) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Save")
                         }
                     }
                 }
+            }
 
-                lyrics != null -> {
-                    if (isSynced) {
-                        SyncedLyricsView(lrcLines, currentLineIndex)
-                    } else {
-                        PlainLyricsView(lyrics!!)
-                    }
+            lyrics != null -> {
+                if (isSynced) {
+                    SyncedLyricsView(lrcLines, currentLineIndex)
+                } else {
+                    PlainLyricsView(lyrics!!)
                 }
+            }
 
-                else -> {
-                    EmptyLyricsView(filePickerLauncher) {
-                        editText = ""
-                        viewModel.startEditing()
-                    }
+            else -> {
+                EmptyLyricsView(filePickerLauncher) {
+                    editText = ""
+                    viewModel.startEditing()
                 }
             }
         }

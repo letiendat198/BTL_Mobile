@@ -31,12 +31,13 @@ import com.ptit.btl_mobile.model.database.SongArtistCrossRef
 import com.ptit.btl_mobile.model.database.SongWithArtists
 import com.ptit.btl_mobile.model.datastore.PreferencesKeys
 import com.ptit.btl_mobile.util.DateConverter
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.Date
 
-class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
+class MediaLoader(val context: Context, val scope: CoroutineScope) {
     @RequiresExtension(extension = Build.VERSION_CODES.R, version = 1)
     fun updateOrReloadMedia() {
         scope.launch {
@@ -126,6 +127,64 @@ class MediaLoader(val context: Context, val scope: LifecycleCoroutineScope) {
         }.invokeOnCompletion {
             scope.launch(Dispatchers.Main) {
                 Toast.makeText(context, "Media loading completed!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Would be slow AF
+    // Update: Turns out it's not that slow :D
+    public fun cleanUpSong() {
+        Log.d("MEDIA_LOADER","Clean up called")
+        scope.launch(Dispatchers.IO) {
+            val db = Database.getInstance()
+            val songs = db.SongDAO().getAllWithArtists()
+            val contentResolver = context.contentResolver
+            songs.forEach { (song, artists) ->
+                var shouldDelete = false
+                contentResolver.query(
+                    Uri.parse(song.songUri),
+                    arrayOf(MediaStore.MediaColumns.DATA),
+                    null,
+                    null,
+                    null,
+                    null
+                ).use { cursor ->
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            val path = cursor.getString(0)
+                            if (!File(path).exists()) shouldDelete = true
+                        }
+                        else {
+                            shouldDelete = true
+                        }
+                    }
+                    else { // Content URI unavailable -> Delete
+                        shouldDelete = true
+                    }
+                }
+
+                if (shouldDelete) {
+                    Log.d("MEDIA_LOADER", "Cleaned up song ${song.name}")
+                    // If artist has no song -> Remove
+                    artists.forEach { artist ->
+                        val songs = db.ArtistDAO().getSongsByArtistId(artist.artistId)
+                        if (songs.size <= 1) {
+                            db.ArtistDAO().delete(artist)
+                        }
+                    }
+                    // If album has no song -> Remove
+                    val album = db.SongDAO().getSongWithAlbum(song.songId)
+                    // If song actually have album
+                    if (album.album != null) {
+                        val albumSongs = db.AlbumDAO().getAlbumWithSongs(album.album.albumId)
+
+                        if (albumSongs == null || albumSongs.songs.size <= 1) {
+                            db.AlbumDAO().delete(album.album)
+                        }
+                    }
+                    // Delete song last, otherwise crash
+                    db.SongDAO().delete(song)
+                }
             }
         }
     }

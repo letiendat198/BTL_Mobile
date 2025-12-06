@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.ptit.btl_mobile.model.database.Artist
+import com.ptit.btl_mobile.model.database.ArtistWithSongs
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongWithArtists
 

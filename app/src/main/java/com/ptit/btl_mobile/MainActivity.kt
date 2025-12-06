@@ -88,7 +88,9 @@ class MainActivity : ComponentActivity() {
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
                 if (isGranted) {
                     Log.d("PERMISSION", "Permission granted")
-                    MediaLoader(this, this.lifecycleScope).updateOrReloadMedia()
+                    val mediaLoader = MediaLoader(this, this.lifecycleScope)
+                    mediaLoader.updateOrReloadMedia()
+                    mediaLoader.cleanUpSong()
                 }
                 else {
                     Log.d("PERMISSION", "Permission denied")
@@ -125,26 +127,27 @@ fun AppNavLayout() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     var showPlayer by remember { mutableStateOf(false) }
     var topAppBarContent by remember { mutableStateOf(TopAppBarContent("Home")) }
-    var showTopAppBar by remember { mutableStateOf(false) }
+//    var showTopAppBar by remember { mutableStateOf(false) }
 
     val onSetTopAppBar: (TopAppBarContent) -> Unit = {
-        showTopAppBar = true
+//        showTopAppBar = true
         topAppBarContent = it
     }
 
     // Automatically hide top app bar whenever navigate
     // Top app bar is only shown if a component take onSetTopAppBar as argument and call it
     // TopAppBar is opt-in to facilitate vibe-coders
-    LaunchedEffect(navBackStackEntry) {
-        showTopAppBar = false
-    }
+    // Mandatory now
+//    LaunchedEffect(navBackStackEntry) {
+//        showTopAppBar = false
+//    }
 
     SharedTransitionLayout {
         // Don't put AnimatedContent at root. Otherwise, when changing state, there won't be any
         // composable shown and window background will show through, causing white flickering
         Scaffold(
             topBar = {
-                if (!showPlayer && showTopAppBar) {
+                if (!showPlayer) {
                     SharedTopBar(topAppBarContent)
                 }
             },

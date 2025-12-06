@@ -45,6 +45,7 @@ class RecommendationEngine(private val context: Context) {
             // Nếu có model TFLite, ưu tiên chạy model
             return runAIInference(seedSong, allSongs, limit)
         } else {
+            Log.w("RECOMMEND_ENGINE", "USING FALLBACK ALGORITHM")
             // Nếu không, chạy thuật toán logic dự phòng
             return runHeuristicFallback(seedSong, allSongs, limit)
         }

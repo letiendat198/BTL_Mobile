@@ -18,13 +18,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.ptit.btl_mobile.R
 import com.ptit.btl_mobile.ui.components.SongEntry
+import com.ptit.btl_mobile.ui.components.SongList
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
+import com.ptit.btl_mobile.util.SongOption
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -32,12 +34,10 @@ import java.util.Locale
 @Composable
 fun PlaylistDetailScreen(
     onBack: () -> Unit,
-    onAddSongs: (Long) -> Unit // Callback to navigate to add songs screen
+    onAddSongs: (Long) -> Unit, // Callback to navigate to add songs screen
+    onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val viewModel: PlaylistViewModel = viewModel(
-        viewModelStoreOwner = LocalActivity.current as ComponentActivity
-    )
-    val playerViewModel = viewModel<PlayerViewModel>(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
     val selectedPlaylist by viewModel.selectedPlaylist.collectAsState()
@@ -47,17 +47,16 @@ fun PlaylistDetailScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    onSetTopAppBar(TopAppBarContent(
+        title = selectedPlaylist?.name ?: "Playlist Details",
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+            }
+        }
+    ))
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(selectedPlaylist?.name ?: "Playlist Details") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             selectedPlaylist?.let {
                 FloatingActionButton(onClick = { onAddSongs(it.playlistId) }) {
@@ -67,102 +66,82 @@ fun PlaylistDetailScreen(
         }
     ) { paddingValues ->
         selectedPlaylist?.let { playlist ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                verticalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                // Header section with image and info
-                item {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        AsyncImage(
-                            model = playlist.imageUri ?: R.drawable.ic_music_sample,
-                            contentDescription = "Playlist cover",
-                            placeholder = painterResource(R.drawable.ic_music_sample),
-                            error = painterResource(R.drawable.ic_music_sample),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(280.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                        )
-
-                        Spacer(Modifier.height(16.dp))
-
-                        Text(playlist.name, style = MaterialTheme.typography.headlineMedium)
-                        Text(
-                            "Created: ${dateFormatter.format(playlist.dateCreated)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                        Text(
-                            "${playlistSongs.size} songs",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(Modifier.height(16.dp))
-
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Button(onClick = { showEditDialog = true }) {
-                                Text("Edit")
-                            }
-                            OutlinedButton(onClick = { showDeleteDialog = true }) {
-                                Text("Delete")
-                            }
-                        }
-
-                        Spacer(Modifier.height(16.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(8.dp))
-                    }
-                }
-
-                // Empty state or song items
-                if (playlistSongs.isEmpty()) {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 48.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "No songs in this playlist yet",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Gray
-                            )
-                        }
-                    }
-                } else {
-                    // Add song items directly to this LazyColumn
-                    itemsIndexed(playlistSongs) { index, song ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp)
-                        ) {
-                            SongEntry(
-                                song = song,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        playerViewModel.playSong(index, playlistSongs)
-                                    }
-                            )
-                            IconButton(onClick = {
-                                viewModel.removeSongFromPlaylist(playlist, song)
-                            }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Remove song")
-                            }
-                        }
-                    }
+            // Empty state or song items
+            if (playlistSongs.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        "No songs in this playlist yet",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
                 }
             }
+            else {
+                SongList(
+                    header = {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            AsyncImage(
+                                model = playlist.imageUri ?: R.drawable.ic_music_sample,
+                                contentDescription = "Playlist cover",
+                                placeholder = painterResource(R.drawable.ic_music_sample),
+                                error = painterResource(R.drawable.ic_music_sample),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(280.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                            )
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Text(playlist.name, style = MaterialTheme.typography.headlineMedium)
+                            Text(
+                                "Created: ${dateFormatter.format(playlist.dateCreated)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray
+                            )
+                            Text(
+                                "${playlistSongs.size} songs",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Spacer(Modifier.height(16.dp))
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Button(onClick = { showEditDialog = true }) {
+                                    Text("Edit")
+                                }
+                                OutlinedButton(onClick = { showDeleteDialog = true }) {
+                                    Text("Delete")
+                                }
+                            }
+
+                            Spacer(Modifier.height(16.dp))
+                            HorizontalDivider()
+                            Spacer(Modifier.height(8.dp))
+                        }
+                    },
+                    songs = playlistSongs,
+                    entryOptions = listOf(
+                        SongOption(
+                            title = "Delete from playlist",
+                            icon = {Icon(Icons.Default.Delete, contentDescription = "Remove song")},
+                            onClick = { song ->
+                                viewModel.removeSongFromPlaylist(playlist, song)
+                            }
+                        )
+                    )
+                )
+            }
+
 
             // Edit Dialog
             if (showEditDialog) {
