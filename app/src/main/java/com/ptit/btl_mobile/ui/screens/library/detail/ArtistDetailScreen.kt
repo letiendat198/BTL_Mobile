@@ -15,9 +15,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.ptit.btl_mobile.ui.components.SongList
 import com.ptit.btl_mobile.ui.components.ThumbnailImage
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import com.ptit.btl_mobile.ui.screens.library.AlbumWithInfo
 import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 
@@ -26,7 +26,8 @@ import com.ptit.btl_mobile.ui.screens.library.LibraryViewModel
 fun ArtistDetailScreen(
     artistId: Long,
     onBack: () -> Unit,
-    onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit
+    onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val viewModel: LibraryViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -44,107 +45,102 @@ fun ArtistDetailScreen(
 
     var selectedTab by remember { mutableStateOf(0) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(artist?.name ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = { onBack() }) {
-                        Icon(Icons.Default.ArrowBack, "Back")
-                    }
-                }
+    onSetTopAppBar(TopAppBarContent(
+        title = artist?.name ?: "",
+        navigationIcon = {
+            IconButton(onClick = { onBack() }) {
+                Icon(Icons.Default.ArrowBack, "Back")
+            }
+        }
+    ))
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Artist Header
+        artist?.let { artistData ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                ThumbnailImage(
+                    imageUri = artistData.imageUri,
+                    isCircle = true,
+                    modifier = Modifier.size(150.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = artistData.name,
+                    style = MaterialTheme.typography.headlineMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "$albumCount albums • $songCount bài hát",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        TabRow(selectedTabIndex = selectedTab) {
+            Tab(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                text = { Text("Bài hát") }
+            )
+            Tab(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                text = { Text("Albums") }
             )
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            // Artist Header
-            artist?.let { artistData ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+
+        when (selectedTab) {
+            0 -> {
+                // Tab bài hát
+                SongList(
+                    songs = songs
+                )
+            }
+            1 -> {
+                // Tab albums
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    ThumbnailImage(
-                        imageUri = artistData.imageUri,
-                        isCircle = true,
-                        modifier = Modifier.size(150.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = artistData.name,
-                        style = MaterialTheme.typography.headlineMedium,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = "$albumCount albums • $songCount bài hát",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            TabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Bài hát") }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Albums") }
-                )
-            }
-
-            when (selectedTab) {
-                0 -> {
-                    // Tab bài hát
-                    SongList(
-                        songs = songs
-                    )
-                }
-                1 -> {
-                    // Tab albums
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(albums.size) { index ->
-                            val albumInfo = albums[index]
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onNavToAlbumDetail(albumInfo)
-                                    }
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                ThumbnailImage(
-                                    imageUri = albumInfo.album.imageUri,
-                                    modifier = Modifier.size(60.dp)
-                                )
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = albumInfo.album.name,
-                                        style = MaterialTheme.typography.bodyLarge
-                                    )
-                                    Text(
-                                        text = "${albumInfo.album.year ?: ""} • ${albumInfo.songCount} bài hát",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                    items(albums.size) { index ->
+                        val albumInfo = albums[index]
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onNavToAlbumDetail(albumInfo)
                                 }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ThumbnailImage(
+                                imageUri = albumInfo.album.imageUri,
+                                modifier = Modifier.size(60.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = albumInfo.album.name,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = "${albumInfo.album.year ?: ""} • ${albumInfo.songCount} bài hát",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }

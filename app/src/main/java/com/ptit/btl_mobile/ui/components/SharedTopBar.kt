@@ -14,6 +14,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
@@ -29,7 +30,7 @@ fun SharedTopBar(content: TopAppBarContent) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     TopAppBar(
-        title = { Text(content.title) },
+        title = { Text(content.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = content.navigationIcon,
         actions = content.actions,
         scrollBehavior = scrollBehavior,

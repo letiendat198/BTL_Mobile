@@ -16,6 +16,7 @@ data class Song (
     val duration: Long,
     val dateAdded: Long,
     val imageUri: String? = null,
+    val lyricUri: String? = null,
     val songAlbumId: Long? = null,
 )
 
@@ -71,6 +72,15 @@ data class AlbumWithSongs(
         entityColumn = "songAlbumId"
     )
     val songs: List<Song>
+)
+
+data class SongWithAlbum(
+    @Embedded val song: Song,
+    @Relation(
+        parentColumn = "songAlbumId",
+        entityColumn = "albumId"
+    )
+    val album: Album?
 )
 
 data class PlaylistWithSongs (

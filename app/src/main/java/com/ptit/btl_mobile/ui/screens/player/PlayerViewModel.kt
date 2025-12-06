@@ -2,19 +2,23 @@ package com.ptit.btl_mobile.ui.screens.player
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import com.ptit.btl_mobile.model.ai.RecommendationEngine
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.SongWithArtists
+import com.ptit.btl_mobile.model.media.MediaLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,7 +48,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     // --- TÍCH HỢP AI GỢI Ý ---
     private val recommendationEngine = RecommendationEngine(application.applicationContext)
     private var _allSongsForRecommendation = listOf<SongWithArtists>()
-    private val _recommendedSongs = mutableStateListOf<SongWithArtists>()
+    val _recommendedSongs = mutableStateListOf<SongWithArtists>()
     val recommendedSongs: List<SongWithArtists> = _recommendedSongs
     // -------------------------
 
@@ -104,6 +108,33 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
             // Media controller should never be null at this point
             currentSongIndex = mediaController?.currentMediaItemIndex!!
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            super.onPlayerError(error)
+            Log.d("PLAYER", "Playback failed: ${error.errorCodeName}")
+            mediaController?.seekToNextMediaItem()
+            // Theory: Maybe this change player state so that it's not stuck in an erroneous state
+            // And keep skipping songs and repeating this callback many times
+            // Calling .prepare() consistently prevent the bug
+            mediaController?.prepare()
+            mediaController?.play()
+
+            if (error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND) {
+                Toast.makeText(application, "Can't play! Skipping", Toast.LENGTH_SHORT).show()
+                // Problematic, will trigger clean up twice or more, causing crash
+                // Because 2 coroutine start at the same time will get the song list with current song still on it
+                // and try to delete it => Race
+//                val currentSongId = currentSong.value?.song?.songId
+//                updateCurrentQueue(currentQueue.value.filter { (song, artist) ->
+//                    song.songId != currentSongId // Here we assume that current song ID is what cause the problem
+//                })
+                val mediaLoader = MediaLoader(application, viewModelScope)
+                mediaLoader.cleanUpSong() // Maybe not a good idea
+            }
+            else {
+                Toast.makeText(application, error.errorCodeName, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 

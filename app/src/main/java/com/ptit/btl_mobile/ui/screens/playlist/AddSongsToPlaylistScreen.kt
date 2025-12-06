@@ -16,13 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.ui.components.SongEntry
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSongsToPlaylistScreen(
     playlistId: Long,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val viewModel: PlaylistViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -82,17 +84,16 @@ fun AddSongsToPlaylistScreen(
         }
     }
 
+    onSetTopAppBar(TopAppBarContent(
+        title = "Add Songs",
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+            }
+        }
+    ))
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Add Songs") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
-                    }
-                }
-            )
-        },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             ExtendedFloatingActionButton(

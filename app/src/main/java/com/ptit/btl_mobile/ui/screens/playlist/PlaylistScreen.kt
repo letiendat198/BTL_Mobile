@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.model.database.Playlist
+import com.ptit.btl_mobile.ui.components.TopAppBarContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(
     onNavToCreatePlaylist: () -> Unit,
-    onNavToPlaylistDetailsScreen: () -> Unit
+    onNavToPlaylistDetailsScreen: () -> Unit,
+    onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val viewModel = viewModel<PlaylistViewModel>(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -29,6 +31,10 @@ fun PlaylistScreen(
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    onSetTopAppBar(TopAppBarContent(
+        title = "Playlist"
+    ))
 
     Scaffold(
         floatingActionButton = {
