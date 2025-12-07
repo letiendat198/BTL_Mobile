@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Playlist
@@ -26,8 +27,12 @@ data class PlaylistDraft(
 )
 
 class PlaylistViewModel(application: Application) : AndroidViewModel(application) {
-
-    private val context = application.applicationContext
+    // View model instance is stored statically inside a view model store owner
+    // So this attribute will keep a reference to context and won't let it be clean up
+    // This may potentially leak memory for activity context (because activity get destroyed all the time)
+    // But, it shouldn't matter to application context, which lives for the whole process
+    // Comment it out anyways to avoid warnings - Dat
+//    private val context = application.applicationContext
     private val db = Database.getInstance()
     private val playlistDao = db.PlaylistDAO()
     private val songDao = db.SongDAO()
@@ -166,7 +171,7 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
                     // Có ảnh custom - copy vào internal storage
                     Log.d("PlaylistViewModel", "Copying custom image to internal storage...")
                     val savedUri = PlaylistImageHelper.copyImageToInternal(
-                        context = context,
+                        context = application.applicationContext,
                         sourceUri = draft.tempImageUri,
                         playlistId = playlistId
                     )
@@ -260,7 +265,7 @@ class PlaylistViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Xóa ảnh custom nếu có
-                PlaylistImageHelper.deletePlaylistImage(context, playlist.playlistId)
+                PlaylistImageHelper.deletePlaylistImage(application.applicationContext, playlist.playlistId)
                 Log.d("PlaylistViewModel", "Deleted playlist image")
 
                 // Xóa các bài hát trong playlist

@@ -1,14 +1,18 @@
 package com.ptit.btl_mobile.ui.screens.library
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import com.ptit.btl_mobile.model.database.*
+import com.ptit.btl_mobile.model.media.MediaLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,7 +31,7 @@ data class ArtistWithInfo(
     val songCount: Int
 )
 
-class LibraryViewModel: ViewModel() {
+class LibraryViewModel(application: Application): AndroidViewModel(application) {
     // ===== CODE CŨ - GIỮ NGUYÊN =====
     private var _songs = listOf<SongWithArtists>()
     var songs = mutableStateOf(_songs)
@@ -72,7 +76,6 @@ class LibraryViewModel: ViewModel() {
     var artistAlbums by mutableStateOf(_artistAlbums)
 
     init {
-        Log.d("LIBRARY_VIEW_MODEL", "ViewModel is being constructed. This should only happens once")
         getAllSongs()
         getAllAlbums()
         getAllArtists()
@@ -182,5 +185,11 @@ class LibraryViewModel: ViewModel() {
 
     fun sortSong() {
         songs.value = _songs.sortedBy { (song, artists) -> song.name }
+    }
+
+    fun reloadMedia() {
+        val mediaLoader = MediaLoader(application.applicationContext, viewModelScope)
+        mediaLoader.loadMediaIntoDB()
+        mediaLoader.cleanUpSong()
     }
 }
