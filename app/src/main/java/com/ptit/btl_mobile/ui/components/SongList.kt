@@ -171,29 +171,31 @@ fun SongEntry(
         }
 
         Box {
-            IconButton(
-                onClick = {
-                    dropdownExpanded = true
-                },
-                modifier = Modifier
-                    .size(30.dp)
-                    .padding(5.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = "Options",
-                )
-            }
-            DropdownMenu(
-                expanded = dropdownExpanded,
-                onDismissRequest = {dropdownExpanded = false}
-            ) {
-                options.forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option.title) },
-                        onClick = { option.onClick(song) },
-                        leadingIcon = option.icon
+            if (!options.isEmpty()) {
+                IconButton(
+                    onClick = {
+                        dropdownExpanded = true
+                    },
+                    modifier = Modifier
+                        .size(30.dp)
+                        .padding(5.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.more_vert),
+                        contentDescription = "Options",
                     )
+                }
+                DropdownMenu(
+                    expanded = dropdownExpanded,
+                    onDismissRequest = {dropdownExpanded = false}
+                ) {
+                    options.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option.title) },
+                            onClick = { option.onClick(song) },
+                            leadingIcon = option.icon
+                        )
+                    }
                 }
             }
         }

@@ -52,16 +52,16 @@ fun HomeScreen(
 
     onSetTopAppBar(TopAppBarContent(
         title = "Home",
-        navigationIcon = {
-            IconButton(onClick = { /* TODO: Open drawer */ }) {
-                Icon(Icons.Default.Menu, contentDescription = "Menu")
-            }
-        },
-        actions = {
-            IconButton(onClick = { /* TODO: Open search */ }) {
-                Icon(Icons.Default.Search, contentDescription = "Search")
-            }
-        }
+//        navigationIcon = {
+//            IconButton(onClick = { /* TODO: Open drawer */ }) {
+//                Icon(Icons.Default.Menu, contentDescription = "Menu")
+//            }
+//        },
+//        actions = {
+//            IconButton(onClick = { /* TODO: Open search */ }) {
+//                Icon(Icons.Default.Search, contentDescription = "Search")
+//            }
+//        }
     ))
 
     Column(

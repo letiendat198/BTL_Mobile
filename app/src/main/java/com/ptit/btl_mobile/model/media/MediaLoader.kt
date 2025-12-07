@@ -11,6 +11,7 @@ import android.util.Log
 import android.util.Size
 import android.widget.Toast
 import androidx.annotation.RequiresExtension
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import androidx.lifecycle.LifecycleCoroutineScope
 import com.ptit.btl_mobile.model.database.Database
@@ -246,16 +247,22 @@ class MediaLoader(val context: Context, val scope: CoroutineScope) {
     fun readFromStoreToAlbum(cursor: Cursor): AlbumWithArtists? {
         val indexAlbum = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)
         val indexAlbumArtist = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST)
+        val indexGenre = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.GENRE)
+        val indexYear = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)
 
         val albumName = cursor.getStringOrNull(indexAlbum)
         val albumArtistsName = cursor.getStringOrNull(indexAlbumArtist)
+        val albumGenre = cursor.getStringOrNull(indexGenre)
+        val albumYear = cursor.getIntOrNull(indexYear)
 
         Log.d("MEDIA_LOADER", "$albumName")
         Log.d("MEDIA_LOADER", "$albumArtistsName")
 
         if (!albumName.isNullOrEmpty()) {
             val album = Album(
-                name = albumName
+                name = albumName,
+                genre = albumGenre,
+                year = albumYear
             )
 
             val listAlbumArtists = mutableListOf<Artist>()
