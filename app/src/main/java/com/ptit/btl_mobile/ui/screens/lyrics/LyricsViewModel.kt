@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.lyrics.LrcLine
 import com.ptit.btl_mobile.model.lyrics.LrcParser
 import com.ptit.btl_mobile.model.lyrics.LyricsManager
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() {
 
     private val lyricsManager = LyricsManager(context)
+    private val db = Database.getInstance()
 
     private val _lyrics = MutableStateFlow<String?>(null)
     val lyrics: StateFlow<String?> = _lyrics.asStateFlow()
@@ -42,10 +44,13 @@ class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() 
     private fun loadLyrics() {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-            val content = lyricsManager.getLyrics(songId)
+
+            val song = db.SongDAO().getSongById(songId)
+            val lyricUri = song?.lyricUri
+
+            val content = lyricsManager.getLyricsFromUri(lyricUri)
             _lyrics.value = content
 
-            // Check if synced (có timestamp)
             if (content != null && content.contains(Regex("""\[\d{2}:\d{2}\.\d{2}\]"""))) {
                 _isSynced.value = true
                 _lrcLines.value = LrcParser.parse(content)
@@ -63,7 +68,6 @@ class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() 
         val lines = _lrcLines.value
         if (lines.isEmpty()) return
 
-        // Tìm dòng hiện tại dựa vào thời gian
         var index = 0
         for (i in lines.indices) {
             if (positionMs >= lines[i].timeInMillis) {
@@ -77,7 +81,14 @@ class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() 
 
     fun saveLyrics(content: String) {
         viewModelScope.launch(Dispatchers.IO) {
-            lyricsManager.saveLyrics(songId, content)
+            val lyricUri = lyricsManager.saveLyricsToFile(songId, content)
+
+            val song = db.SongDAO().getSongById(songId)
+            song?.let {
+                val updatedSong = it.copy(lyricUri = lyricUri)
+                db.SongDAO().update(updatedSong)
+            }
+
             _lyrics.value = content
             _isEditing.value = false
             loadLyrics()
@@ -86,7 +97,14 @@ class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() 
 
     fun deleteLyrics() {
         viewModelScope.launch(Dispatchers.IO) {
-            lyricsManager.deleteLyrics(songId)
+            val song = db.SongDAO().getSongById(songId)
+            song?.let {
+                lyricsManager.deleteLyricsFile(it.lyricUri)
+
+                val updatedSong = it.copy(lyricUri = null)
+                db.SongDAO().update(updatedSong)
+            }
+
             _lyrics.value = null
             _lrcLines.value = emptyList()
             _isSynced.value = false
@@ -96,8 +114,15 @@ class LyricsViewModel(context: Context, private val songId: Long) : ViewModel() 
     fun importLrcFile(uri: Uri) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-            val content = lyricsManager.importFromLrcFile(songId, uri)
-            _lyrics.value = content
+
+            val lyricUri = lyricsManager.importLrcFile(songId, uri)
+
+            val song = db.SongDAO().getSongById(songId)
+            song?.let {
+                val updatedSong = it.copy(lyricUri = lyricUri)
+                db.SongDAO().update(updatedSong)
+            }
+
             loadLyrics()
             _isLoading.value = false
         }

@@ -80,9 +80,6 @@ class MainActivity : ComponentActivity() {
         // Init database
         Database(this.applicationContext)
 
-        // lyric testing
-        LyricsManager(this).clearAllLyrics()
-
         // Request permission
         val requestPermissionLauncher =
             registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->

@@ -1,3 +1,4 @@
+// AppNavHost.kt - Thêm parameter onNavToLyrics
 package com.ptit.btl_mobile
 
 import androidx.compose.animation.EnterTransition
@@ -106,7 +107,6 @@ fun AppNavHost(
             )
         }
 
-        // ← THÊM MỚI: Auto Generate Playlist Screen
         composable<Destinations.AutoGeneratePlaylistScreen> {
             AutoGeneratePlaylistScreen(
                 onBack = { navController.popBackStack() },
@@ -156,7 +156,6 @@ fun AppNavHost(
             )
         }
 
-        // ← THÊM MỚI: Lyrics Screen
         composable(
             route = "lyrics/{songId}/{songTitle}",
             arguments = listOf(
