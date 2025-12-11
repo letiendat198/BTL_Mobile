@@ -45,6 +45,10 @@ interface SongDAO {
     suspend fun getSongWithAlbum(songId: Long): SongWithAlbum
 
     @Transaction
+    @Query("SELECT * FROM Song WHERE songId = :songId")
+    suspend fun getSongById(songId: Long): Song?
+
+    @Transaction
     @Query("SELECT * FROM Song ORDER BY dateAdded DESC LIMIT :limit")
     suspend fun getRecentlyAdded(limit: Int): List<SongWithArtists>
 
@@ -55,4 +59,7 @@ interface SongDAO {
         WHERE PlaylistSongCrossRef.playlistId = :playlistId
     """)
     suspend fun getSongsByPlaylistId(playlistId: Long): List<SongWithArtists>
+
+    @Query("UPDATE Song SET lyricUri = :lyricUri WHERE songId = :songId")
+    suspend fun updateLyricUri(songId: Long, lyricUri: String?)
 }

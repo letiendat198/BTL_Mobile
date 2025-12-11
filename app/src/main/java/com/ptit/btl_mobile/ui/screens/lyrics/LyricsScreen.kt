@@ -19,9 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.model.lyrics.LrcLine
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
@@ -40,8 +41,13 @@ fun LyricsScreen(
     val activity = LocalActivity.current as ComponentActivity
 
     val viewModel: LyricsViewModel = viewModel(
-        factory = LyricsViewModelFactory(context, songId),
-        key = "lyrics_$songId"
+        key = "lyrics_$songId",
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return LyricsViewModel(context, songId) as T
+            }
+        }
     )
 
     val playerViewModel: PlayerViewModel = viewModel(viewModelStoreOwner = activity)
@@ -56,7 +62,6 @@ fun LyricsScreen(
 
     var editText by remember { mutableStateOf("") }
 
-    // Update current position
     LaunchedEffect(currentPosition) {
         viewModel.updateCurrentPosition(currentPosition * 1000)
     }
@@ -164,7 +169,6 @@ fun SyncedLyricsView(lines: List<LrcLine>, currentIndex: Int) {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Auto scroll
     LaunchedEffect(currentIndex) {
         if (currentIndex in lines.indices) {
             coroutineScope.launch {
