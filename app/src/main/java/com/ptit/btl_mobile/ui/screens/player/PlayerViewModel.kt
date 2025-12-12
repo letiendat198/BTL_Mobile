@@ -19,6 +19,7 @@ import com.ptit.btl_mobile.model.ai.RecommendationEngine
 import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.SongWithArtists
 import com.ptit.btl_mobile.model.media.MediaLoader
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -168,21 +169,26 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
     // --- HÀM GỢI Ý MỚI ---
     private fun updateRecommendations(seedSong: SongWithArtists) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Gọi recommendation engine để lấy danh sách Song
-            val recommendedRawSongs = recommendationEngine.getRecommendations(
-                seedSong = seedSong,
-                allSongs = _allSongsForRecommendation,
-                limit = 15
-            )
-            // Chuyển đổi từ List<Song> sang List<SongWithArtists>
-            val recommendedSongsWithArtists = recommendedRawSongs.mapNotNull { song ->
-                _allSongsForRecommendation.find { it.song.songId == song.songId }
-            }
+            try {
+                // Gọi recommendation engine để lấy danh sách Song
+                val recommendedRawSongs = recommendationEngine.getRecommendations(
+                    seedSong = seedSong,
+                    allSongs = _allSongsForRecommendation,
+                    limit = 15
+                )
+                // Chuyển đổi từ List<Song> sang List<SongWithArtists>
+                val recommendedSongsWithArtists = recommendedRawSongs.mapNotNull { song ->
+                    _allSongsForRecommendation.find { it.song.songId == song.songId }
+                }
 
-            withContext(Dispatchers.Main) {
-                _recommendedSongs.clear()
-                _recommendedSongs.addAll(recommendedSongsWithArtists)
-                Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
+                withContext(Dispatchers.Main) {
+                    _recommendedSongs.clear()
+                    _recommendedSongs.addAll(recommendedSongsWithArtists)
+                    Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
+                }
+            }
+            catch (e: Exception) {
+                Log.e("AI_ENGINE", e.message?:"Tensorflow crash again")
             }
         }
     }
