@@ -122,3 +122,4 @@ data class AlbumWithArtists(
     )
     val artists: List<Artist>
 )
+
