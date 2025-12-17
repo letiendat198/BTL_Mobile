@@ -33,6 +33,9 @@ interface PlaylistDAO {
     @Query("SELECT * FROM Playlist ORDER BY dateCreated DESC")
     suspend fun getAllWithSongs(): List<PlaylistWithSongs>
 
+    @Query("SELECT * FROM PlaylistSongCrossRef")
+    suspend fun getAllPlaylistSongCrossRefs(): List<PlaylistSongCrossRef>
+
     @Query("SELECT * FROM Playlist WHERE playlistId = :id")
     suspend fun getById(id: Long): Playlist?
 

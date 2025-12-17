@@ -1,110 +1,147 @@
-package com.ptit.btl_mobile.model.ai
+package com.ptit.btl_mobile.recommendation
 
-import android.content.Context
-import android.util.Log
-import com.ptit.btl_mobile.model.database.Song
-import com.ptit.btl_mobile.model.database.SongWithArtists
-import org.tensorflow.lite.Interpreter
-import java.io.FileInputStream
-import java.nio.MappedByteBuffer
-import java.nio.channels.FileChannel
-import kotlin.math.abs
+import com.ptit.btl_mobile.model.database.*
+import kotlin.math.sqrt
 
-class RecommendationEngine(private val context: Context) {
+class RecommenderEngine(
+    private val songs: List<Song>,
+    private val songArtists: List<SongArtistCrossRef>,
+    private val albums: List<Album>,
+    private val playlistSongs: List<PlaylistSongCrossRef>
+) {
 
-    private var tfliteInterpreter: Interpreter? = null
-    private val MODEL_FILENAME = "recommendation_model.tflite"
+    // INDEXING
+    private val songIndex = songs.mapIndexed { i, s -> s.songId to i }.toMap()
+    private val artistIndex = songArtists.map { it.artistId }.distinct()
+        .mapIndexed { i, id -> id to i }.toMap()
+    private val albumIndex = albums.map { it.albumId }
+        .mapIndexed { i, id -> id to i }.toMap()
+    private val playlistIndex = playlistSongs.map { it.playlistId }.distinct()
+        .mapIndexed { i, id -> id to i }.toMap()
+
+    private val numFeatures =
+        artistIndex.size + albumIndex.size + playlistIndex.size
+
+    // SONG FEATURE MATRIX
+    private val songVectors: Array<IntArray> =
+        Array(songs.size) { IntArray(numFeatures) }
 
     init {
-        try {
-            val model = loadModelFile()
-            if (model != null) {
-                tfliteInterpreter = Interpreter(model)
-                Log.d("AI_ENGINE", "Model loaded successfully")
-            }
-        } catch (e: Exception) {
-            Log.e("AI_ENGINE", "Error loading model: ${e.message}. Using fallback logic.")
+        buildSongVectors()
+    }
+
+    private fun buildSongVectors() {
+        // Artist features
+        for (ref in songArtists) {
+            val sIdx = songIndex[ref.songId] ?: continue
+            val aIdx = artistIndex[ref.artistId] ?: continue
+            songVectors[sIdx][aIdx] = 1
+        }
+
+        // Album features
+        for (song in songs) {
+            val albumId = song.songAlbumId ?: continue
+            val sIdx = songIndex[song.songId] ?: continue
+            val aIdx = albumIndex[albumId] ?: continue
+            songVectors[sIdx][artistIndex.size + aIdx] = 1
+        }
+
+        // Playlist co-occurrence
+        for (ref in playlistSongs) {
+            val sIdx = songIndex[ref.songId] ?: continue
+            val pIdx = playlistIndex[ref.playlistId] ?: continue
+            songVectors[sIdx][artistIndex.size + albumIndex.size + pIdx] = 1
         }
     }
 
-    private fun loadModelFile(): MappedByteBuffer? {
-        return try {
-            val fileDescriptor = context.assets.openFd(MODEL_FILENAME)
-            val inputStream = FileInputStream(fileDescriptor.fileDescriptor)
-            val fileChannel = inputStream.channel
-            val startOffset = fileDescriptor.startOffset
-            val declaredLength = fileDescriptor.declaredLength
-            fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
-        } catch (e: Exception) {
-            null
+    // COSINE SIMILARITY
+    private fun cosine(a: IntArray, b: IntArray): Double {
+        var dot = 0.0
+        var normA = 0.0
+        var normB = 0.0
+
+        for (i in a.indices) {
+            dot += (a[i] * b[i])
+            normA += (a[i] * a[i]).toDouble()
+            normB += (b[i] * b[i]).toDouble()
         }
+        return if (normA == 0.0 || normB == 0.0) 0.0
+        else dot / (sqrt(normA) * sqrt(normB))
     }
 
-    fun getRecommendations(seedSong: SongWithArtists, allSongs: List<SongWithArtists>, limit: Int = 10): List<Song> {
-        if (tfliteInterpreter != null) {
-            // Nếu có model TFLite, ưu tiên chạy model
-            return runAIInference(seedSong, allSongs, limit)
-        } else {
-            Log.w("RECOMMEND_ENGINE", "USING FALLBACK ALGORITHM")
-            // Nếu không, chạy thuật toán logic dự phòng
-            return runHeuristicFallback(seedSong, allSongs, limit)
+    // SONG RECOMMENDATION
+    fun recommendSongs(
+        currentSongId: Long,
+        topK: Int = 5
+    ): List<Long> {
+
+        val idx = songIndex[currentSongId] ?: return emptyList()
+        val baseVector = songVectors[idx]
+
+        return songs.mapIndexed { i, song ->
+            song.songId to cosine(baseVector, songVectors[i])
         }
-    }
-
-    private fun runAIInference(seedSong: SongWithArtists, allSongs: List<SongWithArtists>, limit: Int): List<Song> {
-        val recommendations = allSongs.map { songWithArtists ->
-            // Chuẩn bị input (ví dụ: duration) - bạn có thể tùy chỉnh để khớp với model
-            val input = floatArrayOf(
-                seedSong.song.duration.toFloat(),
-                songWithArtists.song.duration.toFloat()
-            )
-            val output = Array(1) { FloatArray(1) }
-
-            try {
-                tfliteInterpreter?.run(input, output)
-                val score = output[0][0]
-                songWithArtists.song to score // Trả về đối tượng Song và điểm số
-            } catch (e: Exception) {
-                songWithArtists.song to 0f // Gặp lỗi thì cho điểm 0
-            }
-        }
-
-        return recommendations.sortedByDescending { it.second }
+            .filter { it.first != currentSongId }
+            .sortedByDescending { it.second }
+            .take(topK)
             .map { it.first }
-            .take(limit)
     }
 
-    private fun runHeuristicFallback(seedSong: SongWithArtists, allSongs: List<SongWithArtists>, limit: Int): List<Song> {
-        // Lấy danh sách ID nghệ sĩ của bài hát gốc
-        val seedArtistIds = seedSong.artists.map { it.artistId }.toSet()
+    // PLAYLIST SIMILARITY
+    fun recommendPlaylists(
+        playlistId: Long,
+        topK: Int = 3
+    ): List<Long> {
 
-        return allSongs.asSequence()
-            .filter { it.song.songId != seedSong.song.songId } // 1. Loại bỏ bài hát gốc
-            .map { songWithArtists ->
-                var score = 0.0
+        val playlistIds = playlistIndex.keys.toList()
+        val vectors = buildPlaylistVectors()
 
-                // 2. Cùng nghệ sĩ (+50 điểm)
-                val currentArtistIds = songWithArtists.artists.map { it.artistId }.toSet()
-                if (currentArtistIds.intersect(seedArtistIds).isNotEmpty()) {
-                    score += 50.0
+        val idx = playlistIndex[playlistId] ?: return emptyList()
+        val baseVector = vectors[idx]
+
+        return playlistIds.mapIndexed { i, pid ->
+            pid to cosine(baseVector, vectors[i])
+        }
+            .filter { it.first != playlistId }
+            .sortedByDescending { it.second }
+            .take(topK)
+            .map { it.first }
+    }
+
+    // PLAYLIST VECTOR
+    private fun buildPlaylistVectors(): Array<IntArray> {
+
+        val size =
+            songs.size + artistIndex.size + albumIndex.size
+
+        val vectors = Array(playlistIndex.size) {
+            IntArray(size)
+        }
+
+        for (ref in playlistSongs) {
+            val pIdx = playlistIndex[ref.playlistId] ?: continue
+            val sIdx = songIndex[ref.songId] ?: continue
+
+            // Song
+            vectors[pIdx][sIdx] = 1
+
+            // Artist
+            songArtists.filter { it.songId == ref.songId }
+                .forEach {
+                    val aIdx = artistIndex[it.artistId] ?: return@forEach
+                    vectors[pIdx][songs.size + aIdx] = 1
                 }
 
-                // 3. Thời lượng gần nhau (+20 điểm nếu chênh lệch < 30s)
-                val durationDiff = abs(songWithArtists.song.duration - seedSong.song.duration)
-                if (durationDiff < 30000) { // 30 giây
-                    score += 20.0
+            // Album
+            val albumId = songs.find { it.songId == ref.songId }?.songAlbumId
+            if (albumId != null) {
+                val alIdx = albumIndex[albumId]
+                if (alIdx != null) {
+                    vectors[pIdx][songs.size + artistIndex.size + alIdx] = 1
                 }
-
-                // 4. Tên bài hát có chứa từ giống nhau (+ N điểm)
-                val seedWords = seedSong.song.name.split(" ").toSet()
-                val commonWords = songWithArtists.song.name.split(" ").count { it in seedWords }
-                score += commonWords * 2.0
-
-                songWithArtists.song to score // Trả về đối tượng Song và điểm số
             }
-            .sortedByDescending { it.second } // Sắp xếp điểm từ cao xuống thấp
-            .map { it.first } // Chỉ lấy đối tượng Song
-            .take(limit)
-            .toList()
+
+        }
+        return vectors
     }
 }

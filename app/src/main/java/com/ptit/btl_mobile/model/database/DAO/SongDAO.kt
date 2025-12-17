@@ -36,6 +36,9 @@ interface SongDAO {
     @Query("SELECT * FROM Song")
     suspend fun getAllWithArtists(): List<SongWithArtists>
 
+    @Query("SELECT * FROM SongArtistCrossRef")
+    suspend fun getAllSongArtistCrossRefs(): List<SongArtistCrossRef>
+
     @Transaction
     @Query("SELECT * FROM Song")
     suspend fun getAllWithAlbum(): List<SongWithAlbum>
