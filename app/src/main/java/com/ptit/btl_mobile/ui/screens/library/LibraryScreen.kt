@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -72,7 +74,8 @@ enum class LibraryTabs(val index: Int, val title: String) {
 fun LibraryScreen(
     onSetTopAppBar: (TopAppBarContent) -> Unit = {},
     onNavToAlbumDetail: (album: AlbumWithInfo) -> Unit,
-    onNavToArtistDetail: (artist: ArtistWithInfo) -> Unit
+    onNavToArtistDetail: (artist: ArtistWithInfo) -> Unit,
+    onNavToEditMetadata: (songId: Long) -> Unit
 ) {
     // Using MainActivity store owner allow view model
     // to be maintained even after user navigated away
@@ -134,7 +137,7 @@ fun LibraryScreen(
             }
         ) {
             when(selectedTab) {
-                0 -> LibrarySongTab(viewModel)
+                0 -> LibrarySongTab(viewModel, onNavToEditMetadata)
                 1 -> AlbumsTab(
                     onNavToAlbumDetail = onNavToAlbumDetail,
                     viewModel = viewModel
@@ -149,7 +152,10 @@ fun LibraryScreen(
 }
 
 @Composable
-fun LibrarySongTab(viewModel: LibraryViewModel) {
+fun LibrarySongTab(
+    viewModel: LibraryViewModel,
+    onNavToEditMetadata: (Long) -> Unit
+) {
     var searchQuery by viewModel.searchQuery
     // Persist song list state in Library view model
     viewModel.listState = viewModel.listState ?: rememberLazyListState()
@@ -161,14 +167,17 @@ fun LibrarySongTab(viewModel: LibraryViewModel) {
     val entryOptions = listOf(
         SongOption(
             title = "Add to playlist...",
+            icon = {Icon(painterResource(R.drawable.playlist_play), contentDescription = "Add to playlist")},
             onClick = { song ->
                 currentSongToAdd = song
                 showPlaylistSelectDialog = true
             }
         ),
-//        SongOption(
-//            title = "Delete song from device"
-//        )
+        SongOption(
+            title = "Edit metadata",
+            icon = { Icon(Icons.Default.Edit, contentDescription = "Edit metadata") },
+            onClick = { song -> onNavToEditMetadata(song.song.songId)}
+        )
     )
 
     Column(

@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.application
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -118,15 +119,13 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
             mediaController?.prepare()
             mediaController?.play()
 
-            val app = getApplication<Application>()
-
             if (error.errorCode == PlaybackException.ERROR_CODE_IO_FILE_NOT_FOUND) {
-                Toast.makeText(app, "Can't play! Skipping", Toast.LENGTH_SHORT).show()
-                val mediaLoader = MediaLoader(app, viewModelScope)
+                Toast.makeText(application, "Can't play! Skipping", Toast.LENGTH_SHORT).show()
+                val mediaLoader = MediaLoader(application, viewModelScope)
                 mediaLoader.cleanUpSong()
             }
             else {
-                Toast.makeText(app, error.errorCodeName, Toast.LENGTH_SHORT).show()
+                Toast.makeText(application, error.errorCodeName, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -156,6 +155,7 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         return _currentQueue.map { MediaItem.fromUri(it.song.songUri) }
     }
 
+    // TODO: INVESTIGATE CHANGING SONG IN RECOMMEND
     private fun updateRecommendations(seedSongId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             if (recommendationEngine == null) {
@@ -167,14 +167,10 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
                 _allSongsForRecommendation.find { it.song.songId == songId }
             }
 
-                withContext(Dispatchers.Main) {
-                    _recommendedSongs.clear()
-                    _recommendedSongs.addAll(recommendedSongsWithArtists)
-                    Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
-                }
-            }
-            catch (e: Exception) {
-                Log.e("AI_ENGINE", e.message?:"Tensorflow crash again")
+            withContext(Dispatchers.Main) {
+                _recommendedSongs.clear()
+                _recommendedSongs.addAll(recommendedSongsWithArtists)
+                Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
             }
         }
     }

@@ -7,4 +7,5 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 object PreferencesKeys {
     val MEDIASTORE_GENERATION = longPreferencesKey("MEDIASTORE_GENERATION")
     val MEDIASTORE_VERSION = stringPreferencesKey("MEDIASTORE_VERSION")
+//    val MEDIA_CONTROLLER_SESSION_TOKEN = stringPreferencesKey("MEDIA_CONTROLLER_SESSION_TOKEN")
 }

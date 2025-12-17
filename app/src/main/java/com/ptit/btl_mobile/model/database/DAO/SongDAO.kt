@@ -40,6 +40,10 @@ interface SongDAO {
     suspend fun getAllSongArtistCrossRefs(): List<SongArtistCrossRef>
 
     @Transaction
+    @Query("SELECT * FROM Song WHERE songId = :songId")
+    suspend fun getSongWithArtists(songId: Long): SongWithArtists
+
+    @Transaction
     @Query("SELECT * FROM Song")
     suspend fun getAllWithAlbum(): List<SongWithAlbum>
 

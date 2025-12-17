@@ -10,9 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +36,8 @@ import com.ptit.btl_mobile.ui.screens.playlist.PlaylistViewModel
 fun HomeScreen(
     onNavigateToAutoPlaylist: () -> Unit = {},
     onNavigateToPlaylistDetail: (Long) -> Unit = {},
-    onSetTopAppBar: (TopAppBarContent) -> Unit
+    onNavigateToListeningParty: () -> Unit = {},
+    onSetTopAppBar: (TopAppBarContent) -> Unit,
 ) {
     val viewModel: PlaylistViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
@@ -57,11 +55,11 @@ fun HomeScreen(
 //                Icon(Icons.Default.Menu, contentDescription = "Menu")
 //            }
 //        },
-//        actions = {
-//            IconButton(onClick = { /* TODO: Open search */ }) {
-//                Icon(Icons.Default.Search, contentDescription = "Search")
-//            }
-//        }
+        actions = {
+            IconButton(onClick = { onNavigateToListeningParty() }) {
+                Icon(painterResource(R.drawable.diversity_3), contentDescription = "Listening party")
+            }
+        }
     ))
 
     Column(
