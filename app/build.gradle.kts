@@ -42,7 +42,7 @@ android {
     sourceSets {
         getByName("main") {
             assets {
-                srcDirs("src\\main\\assets", "src\\main\\assets")
+                srcDirs("src\\main\\assets")
             }
         }
     }
@@ -113,8 +113,9 @@ dependencies {
     // Preference DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 
-    // Thư viện để chạy model AI
-    implementation("org.tensorflow:tensorflow-lite:2.14.0")
-    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    // LiteRT dependencies for Google Play services
+    implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
+    // Optional: include LiteRT Support Library
+    implementation("com.google.android.gms:play-services-tflite-support:16.4.0")
 
 }

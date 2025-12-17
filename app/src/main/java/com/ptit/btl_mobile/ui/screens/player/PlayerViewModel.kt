@@ -167,10 +167,14 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
                 _allSongsForRecommendation.find { it.song.songId == songId }
             }
 
-            withContext(Dispatchers.Main) {
-                _recommendedSongs.clear()
-                _recommendedSongs.addAll(recommendedSongsWithArtists)
-                Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
+                withContext(Dispatchers.Main) {
+                    _recommendedSongs.clear()
+                    _recommendedSongs.addAll(recommendedSongsWithArtists)
+                    Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
+                }
+            }
+            catch (e: Exception) {
+                Log.e("AI_ENGINE", e.message?:"Tensorflow crash again")
             }
         }
     }
