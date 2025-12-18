@@ -2,6 +2,7 @@ package com.ptit.btl_mobile.ui.screens.party
 
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun JoinScreen(partyViewModel: ListeningPartyViewModel) {
-    var ip by remember { mutableStateOf("localhost") }
+    var ip by remember { mutableStateOf("") }
     var port by remember { mutableStateOf("") }
     val pattern = remember { Regex("^\\d*\$") }
 
@@ -41,6 +42,10 @@ fun JoinScreen(partyViewModel: ListeningPartyViewModel) {
     val viewModel: JoinViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
+
+    BackHandler {
+        partyViewModel.changePartyState(PartyState.DEFAULT)
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,

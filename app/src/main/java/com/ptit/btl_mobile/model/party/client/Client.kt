@@ -74,16 +74,32 @@ class Client(val context: Context) {
                             MessageType.MESSAGE.SYN -> handler.onSync(message)
                             else -> Log.d("CLIENT", "Client won't handle status type message: " + message.messageType.toString())
                         }
-
                         if (handler.terminated) break
                     }
-                    it.close()
                 }
                 catch (e: Exception) {
                     Log.e("CLIENT", "Error while listening", e)
-//                    it.close()
                 }
+                if (!it.isClosed) {
+                    it.shutdownOutput()
+                    it.close()
+                }
+                socket = null
+                callback.onEnd()
             }?:Log.e("CLIENT", "CAN'T LISTEN WHEN THERE IS NO CONNECTION")
+        }
+    }
+
+    fun close() {
+        socket?.let {
+            try {
+                it.shutdownOutput()
+                it.close()
+            }
+            catch (e: Exception) {
+                Log.e("CLIENT", "Error while closing", e)
+            }
+            socket = null
         }
     }
 }

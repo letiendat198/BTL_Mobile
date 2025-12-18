@@ -37,7 +37,7 @@ fun ListeningPartyScreen(
         when (partyState) {
             PartyState.DEFAULT -> DefaultScreen(viewModel)
             PartyState.JOIN -> JoinScreen(viewModel)
-            PartyState.JOINED -> JoinedScreen()
+            PartyState.JOINED -> JoinedScreen(viewModel)
             PartyState.HOST -> HostScreen(viewModel)
         }
     }
@@ -46,6 +46,9 @@ fun ListeningPartyScreen(
 
 @Composable
 fun DefaultScreen(viewModel: ListeningPartyViewModel) {
+    val joinViewModel: JoinViewModel = viewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+    )
     Column(
         verticalArrangement = Arrangement.spacedBy(10.dp, alignment = Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -53,7 +56,12 @@ fun DefaultScreen(viewModel: ListeningPartyViewModel) {
     ) {
         Text("Would you like to")
         FilledTonalButton (onClick = {
-            viewModel.changePartyState(PartyState.JOIN)
+            if (joinViewModel.client.socket == null) {
+                viewModel.changePartyState(PartyState.JOIN)
+            }
+            else {
+                viewModel.changePartyState(PartyState.JOINED)
+            }
         }) {
             Text("Join")
         }

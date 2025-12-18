@@ -12,8 +12,9 @@ import kotlin.concurrent.thread
 class Server(val context: Context) {
     private val clientMap  = mutableMapOf<String, ClientHandler>()
     var port: Int? = null
+    private var onChange: (Map<String, ClientHandler>) -> Unit = {}
 
-    fun listen(onChange: (Map<String, ClientHandler>) -> Unit = {}) {
+    fun listen() {
         val server = ServerSocket(0)
         Log.d("SERVER", "Server is running on port" + server.localPort)
         port = server.localPort
@@ -57,8 +58,24 @@ class Server(val context: Context) {
     }
 
     suspend fun syncAll(uri: Uri, position: Long) {
+        Log.d("SERVER", "Sync all target with ${uri}, position: ${position}")
+        val pendingDelete = mutableListOf<String>()
         clientMap.forEach { (name, handler) ->
-            handler.synchronize(uri, position)
+            val status = handler.synchronize(uri, position)
+            // If can't sync with a client, assume it's dead => Remove
+            if (status == false) {
+                Log.d("SERVER", "Can't sync with client $name")
+                pendingDelete.add(name)
+            }
         }
+        pendingDelete.forEach {
+            clientMap.remove(it)
+        }
+        onChange(clientMap)
+        Log.d("SERVER", "Sync completed for all target")
+    }
+
+    fun setOnChangeCallback(callback: (Map<String, ClientHandler>) -> Unit) {
+        onChange = callback
     }
 }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.net.Socket
+import java.time.Instant
 import java.util.Arrays
 import java.util.Date
 import kotlin.concurrent.thread
@@ -56,6 +57,7 @@ class ClientHandler(val socket: Socket, val context: Context) {
             val fileStream = context.contentResolver.openInputStream(uri)!!
             var sent: Long = 0
             while (true) {  //Read until EOF is sent => Guarantee server will stop
+                Log.d("CLIENT_HANDLER", "READING FILE TILL EOF")
                 val buf = ByteArray(MAX_PAYLOAD_SIZE - 7)
                 val len = fileStream.read(buf)
                 if (len > 0) {
@@ -83,29 +85,31 @@ class ClientHandler(val socket: Socket, val context: Context) {
     }
 
     suspend fun synchronize(uri: Uri, position: Long): Boolean {
+        Log.d("CLIENT_HANDLER", "Waiting for mutex to sync")
         mutex.withLock {
             val fileInfo = getFileInfoFromUri(context, uri)
             if (fileInfo == null) return false
-
+            Log.d("CLIENT_HANDLER", "Synchronize request for song: " + fileInfo.filename)
             try {
-                while (true) {
+                var counter = 0
+                while (counter < 5) {
+                    counter++
                     outStream.write(
                         MessageBuilder()
                             .addType(MESSAGE.SYN)
                             .addHeader("name", fileInfo.filename)
                             .addHeader("position", position.toString())
-                            .addHeader("timestamp", SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Date()))
+                            // TODO: PLEASE BE AWARE THAT EMPTY HEADER VALUE WILL CAUSE MESSAGE DECODING ISSUE
+                            // ALSO NO ':' BECAUSE MESSAGE DECODING DEPENDS ON THAT
+                            .addHeader("timestamp", SimpleDateFormat("yyyy/MM/dd HHmmss").format(Date()))
                             .build()
                     )
                     outStream.flush()
-
+                    Log.d("CLIENT_HANDLER", "SYN sent, waiting response...")
                     val message = SocketRead.readMessage(inStream)
                     if (message.messageType == MESSAGE.ACK) return true
 
                     val sendStatus = sendFile(uri)
-                    runBlocking { // Delay to wait for client to stabilize?
-                        delay(1000)
-                    }
                     if (!sendStatus) return false // If can't send file. Nothing can be done. Return
                 }
             }

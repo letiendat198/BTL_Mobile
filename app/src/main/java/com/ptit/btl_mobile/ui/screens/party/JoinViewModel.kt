@@ -22,6 +22,8 @@ class JoinViewModel(val context: Application): AndroidViewModel(context) {
     val currentProgress = mutableFloatStateOf(0f)
     var currentUri: Uri? = null
 
+    val alreadyEnded = mutableStateOf(false)
+
     // When server pushes info to client, use this callback to influence the UI and media controller
     val callback = object: ClientCallback  {
         override fun onFileTransferProgress(name: String, progress: Float) {
@@ -44,7 +46,8 @@ class JoinViewModel(val context: Application): AndroidViewModel(context) {
         }
 
         override fun onEnd() {
-
+            alreadyEnded.value = true
+            alreadyEnded.value = false
         }
 
     }
@@ -56,6 +59,12 @@ class JoinViewModel(val context: Application): AndroidViewModel(context) {
             withContext(Dispatchers.Main) {
                 onConnected(connected)
             }
+        }
+    }
+
+    fun closeClient() {
+        viewModelScope.launch(Dispatchers.IO) {
+            client.close()
         }
     }
 }
