@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.model.party.utils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
@@ -17,14 +18,18 @@ public class SocketRead {
             try{
                 byte[] buf = new byte[MAX_PAYLOAD_SIZE];
                 int len = inStream.read(buf, 0, 7);
+//                Log.d("SOCKET_READ", "Reading len " + len);
+                if (len == -1) return null;
 
                 //Read until 7 bytes
                 while (len < 7) {
+//                    Log.d("SOCKET_READ", "Wait for 7 bytes");
                     int read = inStream.read(buf, len, 7 - len);
                     if (read > 0) len += read;
                 }
                 // Read until message is complete
                 while (!Message.isComplete(Arrays.copyOfRange(buf, 0, len))) {
+//                    Log.d("SOCKET_READ", "Read till complete");
 //                    logger.debug("Data incomplete, current buffer: {}. Actual data: {}. Expected: {}", len, len-7,MessageDecoder.getDataLength(buf));
                     // Read the rest of data or until MAX_PAYLOAD_SIZE to avoid overflow into buffer
 //                    logger.debug("Try to read {} bytes more", min(MessageDecoder.getDataLength(buf) - len + 7, MAX_PAYLOAD_SIZE - len));

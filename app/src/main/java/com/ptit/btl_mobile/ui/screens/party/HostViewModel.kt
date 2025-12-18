@@ -44,6 +44,7 @@ class HostViewModel(val context: Application): AndroidViewModel(context) {
         @OptIn(UnstableApi::class)
         override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
             super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+            Log.d("HOST_VM", "Position discontinuity called, uri: " + newPosition.mediaItem?.localConfiguration?.uri)
 
             val uri = newPosition.mediaItem?.localConfiguration?.uri
             if (uri == null) return
@@ -53,24 +54,31 @@ class HostViewModel(val context: Application): AndroidViewModel(context) {
 
         }
 
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            super.onMediaItemTransition(mediaItem, reason)
-            val uri = mediaItem?.localConfiguration?.uri
-            if (uri == null) return
-            viewModelScope.launch(Dispatchers.IO) {
-                server.syncAll(uri, 0)
-            }
-        }
+//        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+//            Log.d("HOST_VM", "Item transition called, uri: " + mediaItem?.localConfiguration?.uri)
+//            super.onMediaItemTransition(mediaItem, reason)
+//            val uri = mediaItem?.localConfiguration?.uri
+//            if (uri == null) return
+//            viewModelScope.launch(Dispatchers.IO) {
+//                server.syncAll(uri, 0)
+//            }
+            // Position discontinuity will be called on the same cases anyway
+            // Also, this somehow get called with the first track when you first choose a song?
+            // So just use onPositionDiscontinuity
+//        }
     }
 
     var clientList = mutableStateListOf<String>()
 
     init {
+        Log.d("HOST_VM", "Init")
         hostIp.value = HostInfo.getHostIP(context)
-        server.listen() { clientMap ->
+
+        server.setOnChangeCallback { clientMap ->
             clientList.clear()
             clientList.addAll(clientMap.keys)
         }
+        server.listen()
 
         MediaControllerStore.mediaController?.addListener(MediaControlCallback())
     }

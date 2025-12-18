@@ -1,6 +1,8 @@
 package com.ptit.btl_mobile.ui.screens.party
 
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -14,25 +16,43 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.application
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun JoinedScreen() {
+fun JoinedScreen(partyViewModel: ListeningPartyViewModel) {
     val viewModel: JoinViewModel = viewModel(
         viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
+
+    BackHandler {
+        partyViewModel.changePartyState(PartyState.DEFAULT)
+    }
+
+    LaunchedEffect(viewModel.alreadyEnded) {
+        if (viewModel.alreadyEnded.value == true) {
+            Toast.makeText(
+                viewModel.application,
+                "Connection closed!",
+                Toast.LENGTH_SHORT
+            ).show()
+            partyViewModel.changePartyState(PartyState.JOIN)
+        }
+    }
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -80,6 +100,12 @@ fun JoinedScreen() {
                         .padding(5.dp)
                 )
             }
+        }
+        Button( onClick = {
+            viewModel.closeClient()
+            partyViewModel.changePartyState(PartyState.JOIN)
+        }) {
+            Text("Exit")
         }
     }
 }
