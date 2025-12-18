@@ -13,6 +13,7 @@ import com.ptit.btl_mobile.model.party.client.Client
 import com.ptit.btl_mobile.model.party.client.ClientCallback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class JoinViewModel(val context: Application): AndroidViewModel(context) {
     // Client lives as long as this view model
@@ -21,6 +22,7 @@ class JoinViewModel(val context: Application): AndroidViewModel(context) {
     val currentProgress = mutableFloatStateOf(0f)
     var currentUri: Uri? = null
 
+    // When server pushes info to client, use this callback to influence the UI and media controller
     val callback = object: ClientCallback  {
         override fun onFileTransferProgress(name: String, progress: Float) {
             currentFile.value = name
@@ -51,7 +53,9 @@ class JoinViewModel(val context: Application): AndroidViewModel(context) {
         viewModelScope.launch(Dispatchers.IO) {
             val connected = client.connect(ip, port)
             if (connected) client.listen(callback)
-            onConnected(connected)
+            withContext(Dispatchers.Main) {
+                onConnected(connected)
+            }
         }
     }
 }

@@ -44,8 +44,8 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
 
     private var recommendationEngine: RecommenderEngine? = null
     private var _allSongsForRecommendation = listOf<SongWithArtists>()
-    val _recommendedSongs = mutableStateListOf<SongWithArtists>()
-    val recommendedSongs: List<SongWithArtists> = _recommendedSongs
+    var _recommendedSongs = listOf<SongWithArtists>()
+    val recommendedSongs = mutableStateOf<List<SongWithArtists>>(listOf())
 
     var currentSongIndex = -1
         private set(value) {
@@ -155,7 +155,6 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
         return _currentQueue.map { MediaItem.fromUri(it.song.songUri) }
     }
 
-    // TODO: INVESTIGATE CHANGING SONG IN RECOMMEND
     private fun updateRecommendations(seedSongId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             if (recommendationEngine == null) {
@@ -167,9 +166,21 @@ class PlayerViewModel(application: Application): AndroidViewModel(application) {
                 _allSongsForRecommendation.find { it.song.songId == songId }
             }
 
+            // When clearing and adding recommendation to the same list instead of assigning,
+            // the reference to the list is the same!!!
+            // 1. When changing song in recommend list, currentQueue now points to _recommendedSongs, player playlist is updated.
+            // 2. Then, updateRecommendations updates _recommendedSongs for the new song.
+            // Now queue show the new recommendation instead of actual player playlist (old recommendation)
+            // 3. Now, if user continue to change song from recommend or bugged queue,
+            // Because the reference is the same but content is different, updateCurrentQueue() won't update player playlist
+            // to reflect the newly updated _recommendedSongs content from step 2
+            // Therefore, player will just play the song at that index of the initial playlist in step 1
             withContext(Dispatchers.Main) {
-                _recommendedSongs.clear()
-                _recommendedSongs.addAll(recommendedSongsWithArtists)
+                // Assign to change the ref
+                // Now _recommendedSongs will points to a different pointer when content updated
+                // So now selecting from that list will update playlist correctly
+                _recommendedSongs = recommendedSongsWithArtists
+                recommendedSongs.value = _recommendedSongs
                 Log.d("AI_ENGINE", "Updated recommendations: ${_recommendedSongs.size} songs")
             }
         }

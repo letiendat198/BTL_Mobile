@@ -58,7 +58,7 @@ class RequestHandler(
                     message.getMessageType().toString() + " request won't be handled in file transfer mode"
                 )
             }
-            Log.d("HANDLER", String.format("Written: {}. Expected: {}", written, size))
+            Log.d("HANDLER", String.format("Written: %d. Expected: %d", written, size))
             GlobalScope.launch(Dispatchers.Main) {
                 callback.onFileTransferProgress(fileName?:"", written.toFloat() / size.toFloat())
             }

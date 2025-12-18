@@ -25,6 +25,7 @@ import com.ptit.btl_mobile.model.party.server.Server
 import com.ptit.btl_mobile.model.party.utils.HostInfo
 import com.ptit.btl_mobile.ui.screens.player.PlayerViewModel
 import com.ptit.btl_mobile.ui.screens.playlist.PlaylistViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -32,6 +33,7 @@ class HostViewModel(val context: Application): AndroidViewModel(context) {
     val server = Server(context)
     var hostIp = mutableStateOf("0.0.0.0")
 
+    // Listen to media controller events and pushes information to clients
     inner class MediaControlCallback: Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             super.onIsPlayingChanged(isPlaying)
@@ -45,14 +47,19 @@ class HostViewModel(val context: Application): AndroidViewModel(context) {
 
             val uri = newPosition.mediaItem?.localConfiguration?.uri
             if (uri == null) return
-            server.syncAll(uri, newPosition.positionMs)
+            viewModelScope.launch(Dispatchers.IO) {
+                server.syncAll(uri, newPosition.positionMs)
+            }
+
         }
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             super.onMediaItemTransition(mediaItem, reason)
             val uri = mediaItem?.localConfiguration?.uri
             if (uri == null) return
-            server.syncAll(uri, 0)
+            viewModelScope.launch(Dispatchers.IO) {
+                server.syncAll(uri, 0)
+            }
         }
     }
 

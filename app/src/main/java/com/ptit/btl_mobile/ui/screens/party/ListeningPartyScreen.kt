@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ptit.btl_mobile.ui.components.TopAppBarContent
 
@@ -21,7 +22,7 @@ fun ListeningPartyScreen(
     onSetTopAppBar: (TopAppBarContent) -> Unit
 ) {
     val viewModel: ListeningPartyViewModel = viewModel(
-//        viewModelStoreOwner = LocalActivity.current as ComponentActivity
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity
     )
 
     onSetTopAppBar(TopAppBarContent(
@@ -37,7 +38,7 @@ fun ListeningPartyScreen(
             PartyState.DEFAULT -> DefaultScreen(viewModel)
             PartyState.JOIN -> JoinScreen(viewModel)
             PartyState.JOINED -> JoinedScreen()
-            PartyState.HOST -> HostScreen()
+            PartyState.HOST -> HostScreen(viewModel)
         }
     }
 
@@ -46,8 +47,9 @@ fun ListeningPartyScreen(
 @Composable
 fun DefaultScreen(viewModel: ListeningPartyViewModel) {
     Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.spacedBy(10.dp, alignment = Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+         modifier = Modifier.fillMaxSize()
     ) {
         Text("Would you like to")
         FilledTonalButton (onClick = {

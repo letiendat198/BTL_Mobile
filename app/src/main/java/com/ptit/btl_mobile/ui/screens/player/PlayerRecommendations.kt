@@ -18,7 +18,7 @@ import com.ptit.btl_mobile.ui.components.SongList
 
 @Composable
 fun PlayerRecommendations(viewModel: PlayerViewModel) {
-    val recommendedSongs = viewModel.recommendedSongs
+    val recommendedSongs by viewModel.recommendedSongs
     val currentSong by viewModel.currentSong
 
     Column(

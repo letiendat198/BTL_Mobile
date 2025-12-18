@@ -56,11 +56,9 @@ class Server(val context: Context) {
         }
     }
 
-    fun syncAll(uri: Uri, position: Long) {
-        thread {
-            clientMap.forEach { (name, handler) ->
-                handler.synchronize(uri, position)
-            }
+    suspend fun syncAll(uri: Uri, position: Long) {
+        clientMap.forEach { (name, handler) ->
+            handler.synchronize(uri, position)
         }
     }
 }

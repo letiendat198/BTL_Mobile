@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.ui.screens.editmetadata
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ptit.btl_mobile.model.database.Album
@@ -31,6 +32,20 @@ class EditMetadataViewModel: ViewModel() {
     }
 
     fun saveSongMetadata(songInfo: SongWithInfo) {
-
+        Log.d("EDIT_METADATA_VM", String.format("Song name: %s, artist: %s, album: %s, genre: %s, albumImage: %s",
+            songInfo.song.name,
+            songInfo.artists.joinToString(", ") { it.name },
+            songInfo.album.name,
+            songInfo.album.genre,
+            songInfo.album.imageUri))
+        val db = Database.getInstance()
+        viewModelScope.launch(Dispatchers.IO) {
+            db.SongDAO().updateSongName(songInfo.song.songId, songInfo.song.name)
+            if (!songInfo.song.imageUri.isNullOrEmpty()) {
+                db.SongDAO().updateSongImage(songInfo.song.songId, songInfo.song.imageUri!!)
+            }
+//            val albumId = db.AlbumDAO().safeInsertAlbum(songInfo.album)
+//            db.SongDAO().updateSongAlbum(songInfo.song.songId, albumId)
+        }
     }
 }

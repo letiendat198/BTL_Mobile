@@ -1,5 +1,6 @@
 package com.ptit.btl_mobile.ui.screens.editmetadata
 
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -53,13 +55,14 @@ fun EditMetadataScreen(
 
     // Already remembered internally?
     val songInfo by viewModel.getSongFullInfo(songId).collectAsStateWithLifecycle(null)
+    val context = LocalContext.current
 
     LaunchedEffect(songInfo) {
         songNameInput = songInfo?.song?.name?:""
         artistNameInput = songInfo?.artists?.joinToString(", ") {it.name}?:""
         albumNameInput = songInfo?.album?.name?:""
         genreInput = songInfo?.album?.genre?:""
-        thumbnailUri = songInfo?.song?.imageUri
+        thumbnailUri = songInfo?.album?.imageUri
     }
 
     onSetTopAppBar(TopAppBarContent(
@@ -73,9 +76,11 @@ fun EditMetadataScreen(
             IconButton(onClick = {
                 songInfo?.let {viewModel.saveSongMetadata(it.copy(
                     song = it.song.copy(name = songNameInput),
-                    artists = artistNameInput.split(", ").map { s -> Artist(name = s) },
+                    artists = artistNameInput.split(",").map { s -> Artist(name = s.trim()) },
                     album = it.album.copy(name = albumNameInput, genre = genreInput)
                 )) }
+                Toast.makeText(context, "Song metadata updated", Toast.LENGTH_SHORT).show()
+                onBack()
             }) {
                 Icon(painter = painterResource(R.drawable.save), contentDescription = "Save")
             }
@@ -104,28 +109,28 @@ fun EditMetadataScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = artistNameInput,
-                singleLine = true,
-                onValueChange = { artistNameInput = it },
-                label = { Text("Artists name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = albumNameInput,
-                singleLine = true,
-                onValueChange = { albumNameInput = it },
-                label = { Text("Album name") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = genreInput,
-                singleLine = true,
-                onValueChange = { genreInput = it },
-                label = { Text("Genre") },
-                modifier = Modifier.fillMaxWidth()
-            )
+//            OutlinedTextField(
+//                value = artistNameInput,
+//                singleLine = true,
+//                onValueChange = { artistNameInput = it },
+//                label = { Text("Artists name") },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//
+//            OutlinedTextField(
+//                value = albumNameInput,
+//                singleLine = true,
+//                onValueChange = { albumNameInput = it },
+//                label = { Text("Album name") },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+//            OutlinedTextField(
+//                value = genreInput,
+//                singleLine = true,
+//                onValueChange = { genreInput = it },
+//                label = { Text("Genre") },
+//                modifier = Modifier.fillMaxWidth()
+//            )
         }
     }
 }

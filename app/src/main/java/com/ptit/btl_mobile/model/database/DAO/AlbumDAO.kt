@@ -28,7 +28,7 @@ interface AlbumDAO {
 
     suspend fun safeInsertAlbum(album: Album): Long {
         val albums = getAlbumsByName(album.name)
-        if (albums.isNotEmpty()) return albums[0].albumId // Normally artist name won't duplicate
+        if (albums.isNotEmpty()) return albums[0].albumId // Normally album name won't duplicate
         else return insertAlbum(album)
     }
 

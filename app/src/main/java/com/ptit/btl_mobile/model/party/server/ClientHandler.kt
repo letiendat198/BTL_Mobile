@@ -18,6 +18,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.net.Socket
 import java.util.Arrays
 import java.util.Date
@@ -27,6 +29,7 @@ import kotlin.concurrent.thread
 class ClientHandler(val socket: Socket, val context: Context) {
     val inStream = socket.inputStream
     val outStream = socket.outputStream
+    private val mutex = Mutex() // SUPER IMPORTANT, PREVENT RACING FROM POLLUTING THE SOCKET
 
     private fun sendFile(uri: Uri): Boolean {
         val fileInfo = getFileInfoFromUri(context, uri)
@@ -79,44 +82,48 @@ class ClientHandler(val socket: Socket, val context: Context) {
         return false
     }
 
-    fun synchronize(uri: Uri, position: Long): Boolean {
-        val fileInfo = getFileInfoFromUri(context, uri)
-        if (fileInfo == null) return false
+    suspend fun synchronize(uri: Uri, position: Long): Boolean {
+        mutex.withLock {
+            val fileInfo = getFileInfoFromUri(context, uri)
+            if (fileInfo == null) return false
 
-        try {
-            while (true) {
-                outStream.write(
-                    MessageBuilder()
-                        .addType(MESSAGE.SYN)
-                        .addHeader("name", fileInfo.filename)
-                        .addHeader("position", position.toString())
-                        .addHeader("timestamp", SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Date()))
-                        .build()
-                )
-                outStream.flush()
+            try {
+                while (true) {
+                    outStream.write(
+                        MessageBuilder()
+                            .addType(MESSAGE.SYN)
+                            .addHeader("name", fileInfo.filename)
+                            .addHeader("position", position.toString())
+                            .addHeader("timestamp", SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(Date()))
+                            .build()
+                    )
+                    outStream.flush()
 
-                val message = SocketRead.readMessage(inStream)
-                if (message.messageType == MESSAGE.ACK) return true
+                    val message = SocketRead.readMessage(inStream)
+                    if (message.messageType == MESSAGE.ACK) return true
 
-                val sendStatus = sendFile(uri)
-                runBlocking { // Delay to wait for client to stabilize?
-                    delay(1000)
+                    val sendStatus = sendFile(uri)
+                    runBlocking { // Delay to wait for client to stabilize?
+                        delay(1000)
+                    }
+                    if (!sendStatus) return false // If can't send file. Nothing can be done. Return
                 }
-                if (!sendStatus) return false // If can't send file. Nothing can be done. Return
             }
+            catch (e: Exception){
+                Log.e("CLIENT_HANDLER", "Error while synchronize", e)
+            }
+            return false
         }
-        catch (e: Exception){
-            Log.e("CLIENT_HANDLER", "Error while synchronize", e)
-        }
-        return false
     }
 
-    fun close() {
-        outStream.write(MessageBuilder().addType(MESSAGE.END).build())
-        outStream.flush()
-        val message = SocketRead.readMessage(inStream)
-        if (message.getMessageType() === MESSAGE.ACK) {
-            socket.close()
+    suspend fun close() {
+        mutex.withLock {
+            outStream.write(MessageBuilder().addType(MESSAGE.END).build())
+            outStream.flush()
+            val message = SocketRead.readMessage(inStream)
+            if (message.getMessageType() === MESSAGE.ACK) {
+                socket.close()
+            }
         }
     }
 }

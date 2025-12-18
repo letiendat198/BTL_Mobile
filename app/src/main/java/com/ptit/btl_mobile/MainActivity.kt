@@ -68,6 +68,7 @@ import com.ptit.btl_mobile.util.DateConverter
 import com.ptit.btl_mobile.util.isRoute
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Date
 
 // Init datastore
@@ -97,6 +98,9 @@ class MainActivity : ComponentActivity() {
             }
 
         requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
+
+        val tempDir = getDir("partyTemp", MODE_PRIVATE)
+        if (tempDir.exists()) tempDir.deleteRecursively()
 
         setContent {
             BTL_MobileTheme {
