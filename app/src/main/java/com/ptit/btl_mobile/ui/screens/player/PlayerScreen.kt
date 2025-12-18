@@ -121,30 +121,11 @@ fun PlayerScreen(
                             }
                         }
                         else {
-                            Column {
-                                Box(contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .weight(0.8f) // Thumbnail nhỏ hơn
-                                        .fillMaxWidth()) {
-                                    ThumbnailImage(
-                                        song.song.imageUri,
-                                        modifier = Modifier
-                                            .aspectRatio(1f)
-                                            .fillMaxSize()
-                                            .sharedElement(
-                                                rememberSharedContentState(key = "image"),
-                                                animatedVisibilityScope = animatedContentScope
-                                            )
-                                    )
-                                }
-                                Box(modifier = Modifier.weight(1.2f)) { // Danh sách chiếm phần còn lại
-                                    when (viewModel.currentAltComponent) {
-                                        AltComponent.QUEUE ->  PlayerQueue(viewModel)
-                                        AltComponent.SUGGEST -> PlayerRecommendations(viewModel)
-                                        AltComponent.LYRIC -> TODO()
-                                        AltComponent.NONE -> TODO()
-                                    }
-                                }
+                            when (viewModel.currentAltComponent) {
+                                AltComponent.QUEUE ->  PlayerQueue(viewModel)
+                                AltComponent.SUGGEST -> PlayerRecommendations(viewModel)
+                                AltComponent.LYRIC -> TODO()
+                                AltComponent.NONE -> TODO()
                             }
                         }
                     }
@@ -197,7 +178,7 @@ fun FunctionRow(
 ) {
     val currentSong by viewModel.currentSong
 
-    Row(horizontalArrangement = Arrangement.Absolute.SpaceAround,
+    Row(horizontalArrangement = Arrangement.Absolute.SpaceBetween,
         modifier = Modifier.fillMaxWidth()) {
         IconButton(
             onClick = {

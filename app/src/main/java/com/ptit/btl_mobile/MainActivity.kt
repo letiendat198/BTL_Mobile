@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +55,7 @@ import com.ptit.btl_mobile.model.database.Database
 import com.ptit.btl_mobile.model.database.Song
 import com.ptit.btl_mobile.model.database.SongArtistCrossRef
 import com.ptit.btl_mobile.model.lyrics.LyricsManager
+import com.ptit.btl_mobile.model.media.MediaControllerStore
 import com.ptit.btl_mobile.model.media.MediaLoader
 import com.ptit.btl_mobile.model.media.PlaybackService
 import com.ptit.btl_mobile.ui.components.FloatingPlayer
@@ -66,6 +68,7 @@ import com.ptit.btl_mobile.util.DateConverter
 import com.ptit.btl_mobile.util.isRoute
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Date
 
 // Init datastore
@@ -96,6 +99,9 @@ class MainActivity : ComponentActivity() {
 
         requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_AUDIO)
 
+        val tempDir = getDir("partyTemp", MODE_PRIVATE)
+        if (tempDir.exists()) tempDir.deleteRecursively()
+
         setContent {
             BTL_MobileTheme {
                 AppNavLayout()
@@ -113,6 +119,7 @@ class MainActivity : ComponentActivity() {
         val controllerFeature = MediaController.Builder(this, mediaSessionToken).buildAsync()
         controllerFeature.addListener({
             playerViewModel.value.mediaController = controllerFeature.get()
+            MediaControllerStore.mediaController = controllerFeature.get()
         }, ContextCompat.getMainExecutor(this))
     }
 }

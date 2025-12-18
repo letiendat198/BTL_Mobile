@@ -40,6 +40,10 @@ interface SongDAO {
     suspend fun getAllSongArtistCrossRefs(): List<SongArtistCrossRef>
 
     @Transaction
+    @Query("SELECT * FROM Song WHERE songId = :songId")
+    suspend fun getSongWithArtists(songId: Long): SongWithArtists
+
+    @Transaction
     @Query("SELECT * FROM Song")
     suspend fun getAllWithAlbum(): List<SongWithAlbum>
 
@@ -65,4 +69,11 @@ interface SongDAO {
 
     @Query("UPDATE Song SET lyricUri = :lyricUri WHERE songId = :songId")
     suspend fun updateLyricUri(songId: Long, lyricUri: String?)
+
+    @Query("UPDATE Song SET name = :name WHERE songId = :songId")
+    suspend fun updateSongName(songId: Long, name: String)
+    @Query("UPDATE Song SET imageUri = :imageUri WHERE songId = :songId")
+    suspend fun updateSongImage(songId: Long, imageUri: String)
+    @Query("UPDATE Song SET songAlbumId = :albumId WHERE songId = :songId")
+    suspend fun updateSongAlbum(songId: Long, albumId: Long)
 }

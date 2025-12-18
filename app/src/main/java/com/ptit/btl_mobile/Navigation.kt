@@ -21,9 +21,11 @@ import com.ptit.btl_mobile.ui.screens.playlist.SelectSongsScreen
 import kotlinx.serialization.Serializable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.ptit.btl_mobile.ui.screens.editmetadata.EditMetadataScreen
 import com.ptit.btl_mobile.ui.screens.library.detail.AlbumDetailScreen
 import com.ptit.btl_mobile.ui.screens.library.detail.ArtistDetailScreen
 import com.ptit.btl_mobile.ui.screens.lyrics.LyricsScreen
+import com.ptit.btl_mobile.ui.screens.party.ListeningPartyScreen
 
 sealed class Destinations {
     @Serializable object HomeScreen
@@ -32,6 +34,8 @@ sealed class Destinations {
     @Serializable object PlaylistScreen
     @Serializable object PlaylistDetailScreen
     @Serializable object AutoGeneratePlaylistScreen
+    @Serializable object ListeningPartyScreen
+    @Serializable data class EditMetadataScreen(val songId: Long)
     @Serializable data class AddSongsToPlaylist(val playlistId: Long)
     @Serializable object LibraryScreen
 }
@@ -56,6 +60,9 @@ fun AppNavHost(
                 },
                 onNavigateToPlaylistDetail = { _ ->
                     navController.navigate(Destinations.PlaylistDetailScreen)
+                },
+                onNavigateToListeningParty = {
+                    navController.navigate(Destinations.ListeningPartyScreen)
                 },
                 onSetTopAppBar
             )
@@ -152,6 +159,18 @@ fun AppNavHost(
                 onNavToArtistDetail = { artistInfo ->
                     navController.navigate("library/artist/${artistInfo.artist.artistId}")
                 },
+                onNavToEditMetadata = {id ->
+                    navController.navigate(Destinations.EditMetadataScreen(id))
+                },
+                onSetTopAppBar = onSetTopAppBar
+            )
+        }
+
+        composable<Destinations.EditMetadataScreen> {backStackEntry ->
+            val destObj = backStackEntry.toRoute<Destinations.EditMetadataScreen>()
+            EditMetadataScreen(
+                destObj.songId,
+                onBack = {navController.popBackStack()},
                 onSetTopAppBar = onSetTopAppBar
             )
         }
@@ -169,6 +188,11 @@ fun AppNavHost(
                 songId = songId,
                 songTitle = songTitle,
                 onNavigateBack = { navController.popBackStack() },
+                onSetTopAppBar
+            )
+        }
+        composable<Destinations.ListeningPartyScreen> {
+            ListeningPartyScreen(
                 onSetTopAppBar
             )
         }

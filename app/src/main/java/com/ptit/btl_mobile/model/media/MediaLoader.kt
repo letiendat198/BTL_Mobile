@@ -225,10 +225,10 @@ class MediaLoader(val context: Context, val scope: CoroutineScope) {
         val listArtists = mutableListOf<Artist>()
 
         if (!artistName.isNullOrEmpty()) {
-            val artists = artistName.split(", ")
+            val artists = artistName.split(",")
             artists.forEach { i ->
                 val artist = Artist(
-                    name = artistName,
+                    name = i.trim(),
                     imageUri = imageUri?.toString() // Artist share same image as their first song
                 )
                 listArtists.add(artist)
@@ -267,10 +267,10 @@ class MediaLoader(val context: Context, val scope: CoroutineScope) {
 
             val listAlbumArtists = mutableListOf<Artist>()
             if (!albumArtistsName.isNullOrEmpty()) {
-                val artists = albumArtistsName.split(", ")
+                val artists = albumArtistsName.split(",")
                 artists.forEach { i ->
                     val artist = Artist(
-                        name = albumArtistsName,
+                        name = i.trim(),
                     )
                     listAlbumArtists.add(artist)
                 }
